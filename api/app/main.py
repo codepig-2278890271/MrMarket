@@ -89,12 +89,14 @@ async def health_check():
 
 
 # ================================================================
-# 注册路由模块（逐步接入，目前只有占位）
+# 注册路由模块
 # ================================================================
 
-# TODO Step 3+: 逐个接入实际路由
-# from app.routers import market, news, strategy, backtest, trade, watchlist
-# app.include_router(market.router, prefix=settings.api_prefix)
+from app.routers.market import router as market_router
+app.include_router(market_router, prefix=settings.api_prefix)
+
+# TODO: 逐步接入其余路由模块
+# from app.routers import news, strategy, backtest, trade, watchlist
 # app.include_router(news.router, prefix=settings.api_prefix)
 # app.include_router(strategy.router, prefix=settings.api_prefix)
 # app.include_router(backtest.router, prefix=settings.api_prefix)
