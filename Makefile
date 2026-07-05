@@ -10,10 +10,10 @@ help: ## 显示帮助信息
 # ---------- 开发服务器 ----------
 
 dev-frontend: ## 启动前端开发服务器 (端口 5173)
-	cd ui && npm run dev
+	cd frontend && npm run dev
 
 dev-backend: ## 启动后端开发服务器 (端口 8000, 热重载)
-	cd api && python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+	cd backend && python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 dev: ## 同时启动前后端（需在 tmux 两个窗格中分别运行）
 	@echo "请在两个终端中分别运行："
@@ -23,31 +23,42 @@ dev: ## 同时启动前后端（需在 tmux 两个窗格中分别运行）
 # ---------- 依赖安装 ----------
 
 install-frontend: ## 安装前端依赖
-	cd ui && npm install
+	cd frontend && npm install
 
 install-backend: ## 安装后端依赖
-	cd api && pip install -r requirements.txt
+	cd backend && pip install -e .
 
 install: install-frontend install-backend ## 安装全部依赖
 
 # ---------- 构建 ----------
 
 build-frontend: ## 构建前端生产包
-	cd ui && npm run build
+	cd frontend && npm run build
 
 # ---------- 代码检查 ----------
 
 lint-frontend: ## 前端代码检查
-	cd ui && npx tsc --noEmit
+	cd frontend && npx tsc --noEmit
 
 lint-backend: ## 后端代码检查
-	cd api && python3 -m ruff check app/
+	cd backend && python3 -m ruff check app/
 
 lint: lint-frontend lint-backend ## 前后端代码检查
+
+# ---------- 数据脚本 ----------
+
+seed-data: ## 填充种子数据
+	python3 scripts/data/seed_data.py
+
+sync-stocks: ## 同步股票列表
+	python3 scripts/data/sync_data.py stocks
+
+sync-kline: ## 同步K线数据（前100只）
+	python3 scripts/data/sync_data.py kline
 
 # ---------- 清理 ----------
 
 clean: ## 清理构建产物
-	rm -rf ui/dist
-	find api -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find api -type f -name '*.pyc' -delete
+	rm -rf frontend/dist
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name '*.pyc' -delete

@@ -9,14 +9,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Python 依赖
-COPY api/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/pyproject.toml .
+RUN pip install --no-cache-dir .
 
 # 复制源码
-COPY api/ .
+COPY backend/ .
 
 # 暴露端口
 EXPOSE 8000
 
-# 启动
+# 启动（从 backend/ 目录）
 CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

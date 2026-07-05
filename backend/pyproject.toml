@@ -1,0 +1,62 @@
+[project]
+name = "mrmarket"
+version = "0.1.0"
+description = "市场先生 — A股价值投资辅助分析工具"
+requires-python = ">=3.12"
+
+dependencies = [
+    # Web 框架
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+
+    # 数据校验
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+
+    # 数据库
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+
+    # 缓存 & 任务队列
+    "redis>=5.2",
+    "celery>=5.4",
+
+    # 数据源（A股行情 & 财务数据）
+    "akshare>=1.16",
+    # "tushare>=1.4",       # 备选，需 token
+
+    # 数据处理
+    "pandas>=2.2",
+    "numpy>=2.2",
+
+    # 技术指标计算
+    "ta-lib>=0.6",
+
+    # HTTP 客户端
+    "httpx>=0.28",
+
+    # 工具
+    "python-dotenv>=1.0",
+    "loguru>=0.7",
+
+    # 测试
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.11",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

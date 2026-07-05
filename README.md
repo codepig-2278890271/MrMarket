@@ -8,7 +8,7 @@ A 股价值投资辅助分析工具 — 本地运行的网站，帮助个人投�
 
 ```bash
 # 1. 启动全部服务
-bash start.sh
+bash scripts/dev/start.sh
 
 # 2. 浏览器打开
 # http://localhost:5173
@@ -40,74 +40,77 @@ bash start.sh
 
 ```
 MrMarket/
-├── start.sh                  # 一键启动脚本
-├── api/                      # 后端 (FastAPI, 端口 8000)
+├── frontend/                  # 前端：React 用户界面（端口 5173）
+│   ├── src/                   #   页面、组件、状态管理、路由
+│   ├── public/                #   静态资源
+│   └── package.json           #   依赖管理
+│
+├── backend/                   # 后端：FastAPI 数据处理（端口 8000）
 │   ├── app/
-│   │   ├── main.py           # 应用入口
-│   │   ├── config.py         # 配置管理
-│   │   ├── database.py       # 数据库引擎
-│   │   ├── models/           # ORM 模型
-│   │   │   ├── stock.py      # 股票 + K 线
-│   │   │   ├── watchlist.py  # 自选股
-│   │   │   └── strategy.py   # 策略
-│   │   ├── schemas/          # Pydantic 模型
-│   │   ├── routers/          # API 路由
-│   │   │   ├── market.py     # 行情查询
-│   │   │   ├── watchlist.py  # 自选股 CRUD
-│   │   │   └── strategy.py   # 策略 CRUD
-│   │   ├── services/         # 业务逻辑
-│   │   │   └── data_fetcher.py  # AkShare 数据拉取
-│   │   └── tasks/            # 定时任务（预留）
-│   └── requirements.txt
-├── ui/                       # 前端 (React, 端口 5173)
-│   └── src/
-│       ├── pages/
-│       │   ├── Market/       # 行情页
-│       │   ├── Watchlist/    # 自选股页
-│       │   ├── Strategy/     # 策略页
-│       │   ├── News/         # 资讯页（占位）
-│       │   ├── Backtest/     # 回测页（占位）
-│       │   └── Trade/        # 模拟交易页（占位）
-│       ├── components/       # 通用组件
-│       ├── services/         # API 客户端
-│       └── types/            # 类型定义
-├── docker/                   # Docker 容器化
-│   ├── docker-compose.yml    # PostgreSQL + Redis + API + UI
-│   ├── Dockerfile.api        # 后端镜像
-│   └── Dockerfile.ui         # 前端镜像
-├── scripts/                  # 数据脚本
-│   ├── seed_data.py          # 种子数据填充
-│   └── sync_data.py          # 全量数据同步
-└── docs/prompts/             # 设计文档
+│   │   ├── main.py            #   启动入口
+│   │   ├── api/               #   接口层（v1 版本化路由）
+│   │   ├── services/          #   业务层（分析、回测、策略）
+│   │   ├── integrations/      #   外部数据接入（AkShare 等）
+│   │   ├── models/            #   数据结构（ORM + Pydantic）
+│   │   └── utils/             #   工具函数（配置、数据库）
+│   ├── tests/
+│   ├── pyproject.toml
+│   └── .env
+│
+├── ai/                        # AI 层
+│   ├── prompts/               #   提示词
+│   ├── agents/                #   AI 代理
+│   ├── tools/                 #   AI 工具
+│   ├── config/                #   模型配置
+│   └── core/                  #   LLM 调用入口
+│
+├── scripts/
+│   ├── dev/                   #   开发脚本（启动、构建）
+│   ├── data/                  #   数据脚本（同步、填充）
+│   └── backtest/              #   回测脚本
+│
+├── docs/                      # 项目文档
+│   ├── architecture.md
+│   ├── product.md
+│   ├── api.md
+│   ├── ai.md
+│   └── decisions.md
+│
+├── strategies/                # 策略 YAML 定义（用户可编辑）
+├── docker/                    # 容器化配置
+├── .github/                   # CI/CD
+├── .refactor.md               # 重构记录
+├── Makefile
+└── README.md
 ```
 
 ## 常用命令
 
 ```bash
 # 启动
-bash start.sh
+bash scripts/dev/start.sh
 
 # 停止
-bash start.sh stop
+bash scripts/dev/start.sh stop
 
 # 状态
-bash start.sh status
+bash scripts/dev/start.sh status
 
 # 仅启动数据库
 docker compose -f docker/docker-compose.yml up -d postgres redis
 
-# 手动启动后端（支持热重载）
-cd api && python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# 手动启动后端（从 backend/ 目录）
+cd backend && python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 # 手动启动前端
-cd ui && npm run dev
+cd frontend && npm run dev
 
 # 填充种子数据
-python3 scripts/seed_data.py
+python3 scripts/data/seed_data.py
 
 # 同步全量 A 股数据
-python3 scripts/sync_data.py stocks   # 股票列表
-python3 scripts/sync_data.py kline    # K 线数据
+python3 scripts/data/sync_data.py stocks   # 股票列表
+python3 scripts/data/sync_data.py kline    # K 线数据
 ```
 
 ## API 文档
