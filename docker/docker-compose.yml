@@ -1,0 +1,41 @@
+# ================================================================
+# MrMarket 本地开发环境 — Docker Compose
+# 启动命令：docker compose -f docker/docker-compose.yml up -d
+# ================================================================
+
+services:
+  # ---------- PostgreSQL 16 数据库 ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: mrmarket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mrmarket
+      POSTGRES_PASSWORD: mrmarket
+      POSTGRES_DB: mrmarket
+    ports:
+      - "5432:5432"
+    volumes:
+      # 数据持久化：容器删了数据不丢
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mrmarket"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------- Redis 7 缓存 ----------
+  redis:
+    image: redis:7-alpine
+    container_name: mrmarket-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:

@@ -9,6 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from app.config import settings
+from app.database import init_db
+
+# 必须 import models，否则 SQLAlchemy 的 Base.metadata 找不到表
+import app.models  # noqa: F401
 
 
 # ================================================================
@@ -18,8 +22,11 @@ from app.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用启动 & 关闭时的回调"""
-    # 启动时：初始化数据库连接池、Redis 连接等
     logger.info(f"🚀 {settings.app_name} v{settings.app_version} 启动中...")
+
+    # 自动建表（开发环境用，生产用 Alembic 迁移）
+    await init_db()
+
     logger.info(f"📡 API 地址: http://127.0.0.1:8000{settings.api_prefix}")
     logger.info(f"📖 API 文档: http://127.0.0.1:8000/docs")
 
