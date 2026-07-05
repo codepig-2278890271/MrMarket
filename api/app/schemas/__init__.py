@@ -9,9 +9,20 @@ from app.schemas.watchlist import (
     WatchlistCreateRequest,
     WatchlistUpdateRequest,
 )
+from app.schemas.strategy import (
+    StrategyResponse,
+    StrategyListResponse,
+    StrategyCreateRequest,
+    StrategyUpdateRequest,
+    StrategyToggleRequest,
+    IndicatorConfig,
+)
 
 __all__ = [
     "StockResponse", "KLineResponse", "StocksListResponse", "KLineListResponse",
     "WatchlistItemResponse", "WatchlistListResponse",
     "WatchlistCreateRequest", "WatchlistUpdateRequest",
+    "StrategyResponse", "StrategyListResponse",
+    "StrategyCreateRequest", "StrategyUpdateRequest", "StrategyToggleRequest",
+    "IndicatorConfig",
 ]

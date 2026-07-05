@@ -98,9 +98,11 @@ app.include_router(market_router, prefix=settings.api_prefix)
 from app.routers.watchlist import router as watchlist_router
 app.include_router(watchlist_router, prefix=settings.api_prefix)
 
+from app.routers.strategy import router as strategy_router
+app.include_router(strategy_router, prefix=settings.api_prefix)
+
 # TODO: 逐步接入其余路由模块
-# from app.routers import news, strategy, backtest, trade
+# from app.routers import news, backtest, trade
 # app.include_router(news.router, prefix=settings.api_prefix)
-# app.include_router(strategy.router, prefix=settings.api_prefix)
 # app.include_router(backtest.router, prefix=settings.api_prefix)
 # app.include_router(trade.router, prefix=settings.api_prefix)

@@ -1,6 +1,11 @@
 # ================================================================
-# MrMarket 本地开发环境 — Docker Compose
-# 启动命令：docker compose -f docker/docker-compose.yml up -d
+# MrMarket 全栈容器化部署
+#
+# 启动全部服务（需要先构建镜像）：
+#   docker compose -f docker/docker-compose.yml up -d
+#
+# 仅启动数据库（本地跑前后端）：
+#   docker compose -f docker/docker-compose.yml up -d postgres redis
 # ================================================================
 
 services:
@@ -16,7 +21,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # 数据持久化：容器删了数据不丢
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mrmarket"]
@@ -36,6 +40,39 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # ---------- 后端 API ----------
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: mrmarket-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mrmarket:mrmarket@postgres:5432/mrmarket
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "true"
+      LOG_LEVEL: INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # 开发模式下可注释掉 api 服务，用本地 uvicorn --reload
+
+  # ---------- 前端 ----------
+  ui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ui
+    container_name: mrmarket-ui
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
 
 volumes:
   pgdata:

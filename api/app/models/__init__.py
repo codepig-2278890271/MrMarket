@@ -5,5 +5,6 @@ ORM 模型包
 
 from app.models.stock import Stock, KLineDaily
 from app.models.watchlist import Watchlist
+from app.models.strategy import Strategy
 
-__all__ = ["Stock", "KLineDaily", "Watchlist"]
+__all__ = ["Stock", "KLineDaily", "Watchlist", "Strategy"]

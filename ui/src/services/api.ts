@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { ApiResponse } from '../types/common'
+import { message } from 'antd'
 
 /**
  * Axios 实例
@@ -17,17 +17,15 @@ const apiClient = axios.create({
 // 响应拦截器 — 统一处理错误
 apiClient.interceptors.response.use(
   (response) => {
-    const data = response.data as ApiResponse
-    // 业务错误码（非0即为异常）
-    if (data.code !== 0) {
-      console.error(`[API Error] ${data.message}`)
-      return Promise.reject(new Error(data.message))
-    }
+    // 直接返回 data，兼容后端两种格式：
+    // - 裸数据格式（如行情接口）
+    // - { code, message, data } 包裹格式（如健康检查）
     return response
   },
   (error) => {
-    // 网络错误、超时等
-    console.error(`[API Network Error] ${error.message}`)
+    // 网络错误、超时、后端 4xx/5xx
+    const detail = error.response?.data?.detail || error.message
+    message.error(detail)
     return Promise.reject(error)
   }
 )

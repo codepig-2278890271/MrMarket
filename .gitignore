@@ -34,3 +34,4 @@ data/*.h5
 # 日志
 *.log
 logs/
+.logs/
