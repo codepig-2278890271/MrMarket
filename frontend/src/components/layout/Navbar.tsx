@@ -1,6 +1,6 @@
 /**
  * 顶部导航栏
- * 品牌 Logo + 6 个导航项 + 主题切换
+ * 品牌 Logo + 5 个导航项 + 主题切换
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -9,7 +9,6 @@ import {
   BulbOutlined,
   StockOutlined,
   AimOutlined,
-  HistoryOutlined,
   TeamOutlined,
   ReadOutlined,
   MoonOutlined,
@@ -21,14 +20,13 @@ interface NavbarProps {
   onToggleTheme: () => void
 }
 
-/** 导航项配置 */
+/** 导航项配置（策略 & 回测合并为一个入口） */
 const NAV_ITEMS = [
   { key: '/philosophy', icon: <BulbOutlined />, label: '投资理念' },
-  { key: '/market',     icon: <StockOutlined />,   label: '市场行情' },
-  { key: '/strategy',   icon: <AimOutlined />,     label: '策略' },
-  { key: '/backtest',   icon: <HistoryOutlined />, label: '回测' },
-  { key: '/community',  icon: <TeamOutlined />,    label: '交流广场' },
-  { key: '/news',       icon: <ReadOutlined />,    label: '资讯' },
+  { key: '/market',     icon: <StockOutlined />, label: '市场行情' },
+  { key: '/strategy',   icon: <AimOutlined />,   label: '策略 & 回测' },
+  { key: '/community',  icon: <TeamOutlined />,  label: '交流广场' },
+  { key: '/news',       icon: <ReadOutlined />,  label: '资讯' },
 ]
 
 export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {

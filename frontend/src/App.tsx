@@ -5,8 +5,7 @@ import AppLayout from './components/layout/AppLayout'
 import LoginPage from './pages/Login/LoginPage'
 import PhilosophyPage from './pages/Philosophy/PhilosophyPage'
 import MarketPage from './pages/Market/MarketPage'
-import StrategyList from './pages/Strategy/StrategyList'
-import BacktestPage from './pages/Backtest/BacktestPage'
+import StrategyPage from './pages/Strategy/StrategyPage'
 import CommunityPage from './pages/Community/CommunityPage'
 import NewsPage from './pages/News/NewsPage'
 
@@ -15,10 +14,9 @@ import NewsPage from './pages/News/NewsPage'
  *
  * 路由结构：
  *   /             → 登录页（独立布局）
- *   /market       → 市场行情
- *   /strategy     → 策略
- *   /backtest     → 回测
  *   /philosophy   → 投资理念
+ *   /market       → 市场行情
+ *   /strategy     → 策略 & 回测（标签页切换）
  *   /community    → 交流广场
  *   /news         → 资讯
  *
@@ -35,8 +33,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="philosophy" element={<PhilosophyPage />} />
           <Route path="market" element={<MarketPage />} />
-          <Route path="strategy" element={<StrategyList />} />
-          <Route path="backtest" element={<BacktestPage />} />
+          <Route path="strategy" element={<StrategyPage />} />
           <Route path="community" element={<CommunityPage />} />
           <Route path="news" element={<NewsPage />} />
         </Route>
