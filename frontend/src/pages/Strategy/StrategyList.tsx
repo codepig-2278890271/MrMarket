@@ -7,38 +7,8 @@ import { Table, Button, Modal, Input, Select, Switch, Popconfirm, message, Space
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import apiClient from '../../services/api'
-
-// ---- 类型 ----
-
-interface IndicatorConfig {
-  indicator: string
-  params: Record<string, number>
-}
-
-interface StrategyItem {
-  id: number
-  name: string
-  description: string | null
-  indicators: IndicatorConfig[]
-  enabled: boolean
-  created_at: string
-  updated_at: string
-}
-
-// ---- 指标预设 ----
-
-const INDICATOR_PRESETS: Record<string, Record<string, number>> = {
-  MACD: { fast: 12, slow: 26, signal: 9 },
-  KDJ: { k: 9, d: 3, j: 3 },
-  MA: { period1: 5, period2: 20, period3: 60 },
-  RSI: { period: 14 },
-  BOLL: { period: 20, std: 2 },
-}
-
-const INDICATOR_OPTIONS = Object.keys(INDICATOR_PRESETS).map((k) => ({
-  label: k,
-  value: k,
-}))
+import type { StrategyItem, IndicatorConfig } from '../../types/strategy'
+import { INDICATOR_PRESETS, INDICATOR_OPTIONS } from '../../types/strategy'
 
 export default function StrategyList() {
   // ---- 列表 ----

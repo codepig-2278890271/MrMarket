@@ -3,8 +3,8 @@
 """
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ---------- 指标配置子模型 ----------
 

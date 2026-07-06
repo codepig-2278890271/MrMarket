@@ -3,7 +3,7 @@
 MrMarket 数据同步脚本
 - 同步A股股票列表 → stocks 表
 - 同步日K线数据 → kline_daily 表
-- 数据来源：东方财富 API
+- 数据来源：AkShare（新浪财经）
 
 用法：
   python3 scripts/sync_data.py stocks          # 只同步股票列表
@@ -16,17 +16,20 @@ import asyncio
 import sys
 import os
 from datetime import date, timedelta
-from decimal import Decimal
 
 # 把 backend 目录加入 Python 路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
-from sqlalchemy.dialects.postgresql import insert
 from loguru import logger
+from sqlalchemy import select
 
 from app.utils.database import async_session, engine, Base
 from app.models import Stock, KLineDaily
 from app.integrations.akshare import fetch_stock_list, fetch_kline_daily
+from app.services.sync_service import SyncService
+
+# 限流配置：每次 API 调用间隔（秒），避免被数据源封 IP
+RATE_LIMIT_SECONDS = 0.5
 
 
 async def sync_stocks():
@@ -38,28 +41,11 @@ async def sync_stocks():
         logger.error("❌ 未获取到股票数据，请检查网络")
         return
 
-    async with async_session() as session:
-        for s in stocks:
-            stmt = insert(Stock).values(
-                code=s["code"],
-                name=s["name"],
-                market=s["market"],
-                industry=s.get("industry"),
-                listed_date=s.get("listed_date"),
-                is_st=s.get("is_st", False),
-            ).on_conflict_do_update(
-                index_elements=["code"],
-                set_={
-                    "name": s["name"],
-                    "industry": s.get("industry"),
-                    "is_st": s.get("is_st", False),
-                },
-            )
-            await session.execute(stmt)
+    # 使用 SyncService 单 session 批量写入
+    async with async_session() as db:
+        count = await SyncService.upsert_stocks(db, stocks)
 
-        await session.commit()
-
-    logger.info(f"✅ 股票列表同步完成，共 {len(stocks)} 只")
+    logger.info(f"✅ 股票列表同步完成，共 {count} 只")
 
 
 async def sync_klines(limit: int = 100):
@@ -67,64 +53,44 @@ async def sync_klines(limit: int = 100):
     同步日K线数据
     limit: 最多同步多少只股票（按股票列表顺序），避免一次性请求太多
     """
-    logger.info(f"📊 开始同步K线数据（最多 {limit} 只）...")
+    logger.info(f"📊 开始同步K线数据（最多 {limit} 只，API 间隔 {RATE_LIMIT_SECONDS}s）...")
 
-    async with async_session() as session:
-        from sqlalchemy import select
-        result = await session.execute(
+    # 一次性查询所有待同步的股票
+    async with async_session() as db:
+        result = await db.execute(
             select(Stock.code, Stock.market).order_by(Stock.code).limit(limit)
         )
-        stocks = result.all()
+        stocks = list(result.all())
 
     success_count = 0
     fail_count = 0
-
     start_date = date.today() - timedelta(days=730)
 
-    for i, (code, market) in enumerate(stocks):
-        klines = fetch_kline_daily(code, market, start_date=start_date)
+    # 单 session 批量写入，避免每只股票重复建连
+    async with async_session() as db:
+        for i, (code, market) in enumerate(stocks):
+            # 调用 AkShare API
+            klines = fetch_kline_daily(code, market, start_date=start_date)
 
-        if not klines:
-            fail_count += 1
-            continue
+            if not klines:
+                fail_count += 1
+                continue
 
-        async with async_session() as session:
+            # 确保每条K线有完整字段
             for k in klines:
-                pre_close = (
-                    Decimal(str(k["close"])) - Decimal(str(k["change"]))
-                ).quantize(Decimal("0.001"))
+                k.setdefault("pre_close", 0)
+                k.setdefault("turnover_rate", 0)
 
-                stmt = insert(KLineDaily).values(
-                    stock_code=code,
-                    trade_date=k["trade_date"],
-                    open=Decimal(str(k["open"])),
-                    high=Decimal(str(k["high"])),
-                    low=Decimal(str(k["low"])),
-                    close=Decimal(str(k["close"])),
-                    pre_close=pre_close,
-                    volume=k["volume"],
-                    amount=Decimal(str(k["amount"])),
-                    turnover_rate=Decimal(str(k["turnover_rate"])),
-                ).on_conflict_do_update(
-                    index_elements=["stock_code", "trade_date"],
-                    set_={
-                        "open": Decimal(str(k["open"])),
-                        "high": Decimal(str(k["high"])),
-                        "low": Decimal(str(k["low"])),
-                        "close": Decimal(str(k["close"])),
-                        "pre_close": pre_close,
-                        "volume": k["volume"],
-                        "amount": Decimal(str(k["amount"])),
-                        "turnover_rate": Decimal(str(k["turnover_rate"])),
-                    },
-                )
-                await session.execute(stmt)
+            # 批量 upsert 到数据库
+            await SyncService.upsert_klines(db, code, klines)
+            success_count += 1
 
-            await session.commit()
+            # 限流：每次 API 调用后等待
+            if RATE_LIMIT_SECONDS > 0:
+                await asyncio.sleep(RATE_LIMIT_SECONDS)
 
-        success_count += 1
-        if (i + 1) % 20 == 0:
-            logger.info(f"  进度: {i + 1}/{len(stocks)}")
+            if (i + 1) % 20 == 0:
+                logger.info(f"  进度: {i + 1}/{len(stocks)} (成功 {success_count}, 失败 {fail_count})")
 
     logger.info(f"✅ K线同步完成: 成功 {success_count}, 失败 {fail_count}")
 

@@ -4,8 +4,9 @@ AkShare 数据获取实现
 """
 
 from datetime import date, timedelta
-from loguru import logger
+
 import akshare as ak
+from loguru import logger
 
 from app.integrations.base import BaseFetcher
 

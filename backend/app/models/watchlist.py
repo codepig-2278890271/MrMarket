@@ -4,10 +4,15 @@
 """
 
 from datetime import datetime
-from sqlalchemy import String, DateTime, Text, ForeignKey, UniqueConstraint
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.database import Base
+
+if TYPE_CHECKING:
+    from app.models.stock import Stock
 
 
 class Watchlist(Base):

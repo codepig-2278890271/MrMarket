@@ -7,18 +7,7 @@ import { Input, Button, Table, Popconfirm, Modal, message, Space, Tag } from 'an
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import apiClient from '../../services/api'
-
-interface WatchlistItem {
-  id: number
-  stock_code: string
-  stock_name: string
-  market: string
-  industry: string | null
-  listed_date: string | null
-  is_st: boolean
-  added_at: string
-  note: string | null
-}
+import type { WatchlistItem } from '../../types/watchlist'
 
 export default function WatchlistPage() {
   const [items, setItems] = useState<WatchlistItem[]>([])

@@ -6,8 +6,8 @@ API v1 主路由
 from fastapi import APIRouter
 
 from app.api.v1.endpoints.market import router as market_router
-from app.api.v1.endpoints.watchlist import router as watchlist_router
 from app.api.v1.endpoints.strategy import router as strategy_router
+from app.api.v1.endpoints.watchlist import router as watchlist_router
 
 router = APIRouter()
 router.include_router(market_router)

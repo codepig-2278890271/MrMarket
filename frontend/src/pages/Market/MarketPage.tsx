@@ -8,29 +8,7 @@ import { SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import ReactECharts from 'echarts-for-react'
 import apiClient from '../../services/api'
-
-/** 股票列表项 */
-interface StockItem {
-  code: string
-  name: string
-  market: string
-  industry: string | null
-  listed_date: string | null
-  is_st: boolean
-}
-
-/** 单条K线 */
-interface KLineItem {
-  trade_date: string
-  open: number
-  high: number
-  low: number
-  close: number
-  pre_close: number
-  volume: number
-  amount: number
-  turnover_rate: number | null
-}
+import type { StockItem, KLineItem } from '../../types/stock'
 
 const MARKET_OPTIONS = [
   { value: '', label: '全部市场' },
@@ -38,6 +16,15 @@ const MARKET_OPTIONS = [
   { value: 'SZ', label: '深圳' },
   { value: 'BJ', label: '北京' },
 ]
+
+/** 计算默认日期范围：最近 6 个月 */
+function getDefaultDateRange() {
+  const end = new Date()
+  const start = new Date()
+  start.setMonth(start.getMonth() - 6)
+  const fmt = (d: Date) => d.toISOString().split('T')[0]
+  return { start: fmt(start), end: fmt(end) }
+}
 
 export default function MarketPage() {
   // ---- 搜索 & 列表状态 ----
@@ -80,14 +67,12 @@ export default function MarketPage() {
     setSelectedStock(stock)
     setKlineLoading(true)
     try {
+      const { start, end } = getDefaultDateRange()
       const res = await apiClient.get(`/stocks/${stock.code}/klines`, {
-        params: {
-          start_date: '2026-01-01',
-          end_date: '2026-07-05',
-        },
+        params: { start_date: start, end_date: end },
       })
-      // 反转：后端按日期降序，图表需要升序
       const data: KLineItem[] = res.data.items || []
+      // 反转：后端按日期降序，图表需要升序
       setKlines(data.reverse())
     } finally {
       setKlineLoading(false)

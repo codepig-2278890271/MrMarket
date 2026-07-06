@@ -3,12 +3,11 @@
 使用 SQLAlchemy 2.0 异步引擎 + asyncpg 驱动
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from app.utils.config import settings
-
 
 # 异步引擎 — PostgreSQL 连接池
 engine = create_async_engine(

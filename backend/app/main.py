@@ -4,20 +4,23 @@ MrMarket FastAPI 应用入口
 """
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from uuid import uuid4
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
-from app.utils.config import settings
-from app.utils.database import init_db
-
 # 必须 import models，否则 SQLAlchemy 的 Base.metadata 找不到表
 import app.models  # noqa: F401
-
+from app.api.v1.errors import register_exception_handlers
+from app.api.v1.router import router as v1_router
+from app.utils.config import settings
+from app.utils.database import init_db
 
 # ================================================================
 # 应用生命周期管理
 # ================================================================
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,12 +31,26 @@ async def lifespan(app: FastAPI):
     await init_db()
 
     logger.info(f"📡 API 地址: http://127.0.0.1:8000{settings.api_prefix}")
-    logger.info(f"📖 API 文档: http://127.0.0.1:8000/docs")
+    logger.info("📖 API 文档: http://127.0.0.1:8000/docs")
 
     yield  # ← 应用运行期间
 
     # 关闭时：清理资源
     logger.info(f"👋 {settings.app_name} 正在关闭...")
+
+    # 关闭 Redis 连接池
+    try:
+        from app.utils.redis import close_redis
+        await close_redis()
+    except Exception:
+        pass
+
+    # 关闭数据库连接池
+    try:
+        from app.utils.database import engine
+        await engine.dispose()
+    except Exception:
+        pass
 
 
 # ================================================================
@@ -61,6 +78,28 @@ app.add_middleware(
 
 
 # ================================================================
+# 请求 ID 中间件（追踪请求链路）
+# ================================================================
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    """为每个请求添加 X-Request-ID，方便日志追踪和问题排查"""
+    request_id = request.headers.get("X-Request-ID", str(uuid4())[:8])
+    # 注入到日志上下文（如果 loguru 已配置）
+    with logger.contextualize(request_id=request_id):
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+
+# ================================================================
+# 注册全局异常处理器（统一 { code, message, data, timestamp } 格式）
+# ================================================================
+
+register_exception_handlers(app)
+
+
+# ================================================================
 # 健康检查 & 根路由
 # ================================================================
 
@@ -77,23 +116,19 @@ async def root():
 @app.get("/api/v1/health")
 async def health_check():
     """健康检查接口 — 供前端和监控使用"""
-    import datetime
-    return {
-        "code": 0,
-        "message": "ok",
-        "data": {
+    from app.api.v1.responses import APIResponse
+    return APIResponse.ok(
+        data={
             "status": "healthy",
             "version": settings.app_version,
         },
-        "timestamp": datetime.datetime.now().isoformat(),
-    }
+    )
 
 
 # ================================================================
 # 注册 v1 路由模块
 # ================================================================
 
-from app.api.v1.router import router as v1_router
 app.include_router(v1_router, prefix=settings.api_prefix)
 
 # TODO: 逐步接入其余路由模块

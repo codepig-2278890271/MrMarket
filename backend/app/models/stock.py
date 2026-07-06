@@ -6,7 +6,8 @@
 
 from datetime import date
 from decimal import Decimal
-from sqlalchemy import String, Date, BigInteger, Numeric, Boolean, Index, ForeignKey
+
+from sqlalchemy import BigInteger, Boolean, Date, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.database import Base
