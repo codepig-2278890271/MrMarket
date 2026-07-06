@@ -25,26 +25,24 @@
   /* 背景 */
   --bg-app: #f8fafc;
   --bg-surface: #ffffff;
-  --bg-sidebar: #1e293b;
+  --navbar-bg: #ffffff;
 
   /* 文字 */
   --text-primary: #0f172a;
   --text-secondary: #64748b;
-  --text-sidebar: #cbd5e1;
 
   /* 边框 */
   --border-color: #e2e8f0;
 
   /* 间距 */
-  --sidebar-width: 220px;
-  --header-height: 56px;
+  --navbar-height: 52px;
 }
 
 /* ---------- CSS 变量：深色模式 ---------- */
 .dark {
   --bg-app: #0f172a;
   --bg-surface: #1e293b;
-  --bg-sidebar: #0c1222;
+  --navbar-bg: #1e293b;
 
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;

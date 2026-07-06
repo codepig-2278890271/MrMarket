@@ -1,24 +1,21 @@
 import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Layout, ConfigProvider, theme as antdTheme } from 'antd'
-import Sidebar from './Sidebar'
-import Header from './Header'
+import Navbar from './Navbar'
 
-const { Sider, Content } = Layout
+const { Content } = Layout
 
 /**
  * 应用主布局
  *
  * 结构：
- * ┌────────┬──────────────────────────────┐
- * │        │         Header (顶栏)         │
- * │ Sider  ├──────────────────────────────┤
- * │ (侧栏) │                              │
- * │        │     Content (页面内容区)       │
- * │        │                              │
- * └────────┴──────────────────────────────┘
- *
- * 移动端 (< 768px)：侧栏自动收起
+ * ┌──────────────────────────────────────────────┐
+ * │  Navbar（顶栏：Logo + 导航 + 主题切换）       │
+ * ├──────────────────────────────────────────────┤
+ * │                                              │
+ * │              Content（页面内容区）              │
+ * │                                              │
+ * └──────────────────────────────────────────────┘
  */
 export default function AppLayout() {
   // 读取本地存储的主题偏好，默认浅色
@@ -45,44 +42,27 @@ export default function AppLayout() {
   return (
     <ConfigProvider
       theme={{
-        // Ant Design 5 内置暗色算法 — 根据 isDark 自动切换
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#1e40af', // 品牌色
+          colorPrimary: '#1e40af',
         },
       }}
     >
       <Layout style={{ minHeight: '100vh' }}>
-        {/* 侧边导航栏 */}
-        <Sider
-          width={220}
-          breakpoint="lg"
-          collapsedWidth={0}
-          trigger={null}
+        {/* 顶部导航栏 */}
+        <Navbar isDark={isDark} onToggleTheme={toggleTheme} />
+
+        {/* 页面内容 */}
+        <Content
           style={{
-            backgroundColor: 'var(--bg-sidebar)',
+            padding: 24,
+            backgroundColor: 'var(--bg-app)',
+            flex: 1,
+            overflow: 'auto',
           }}
         >
-          <Sidebar />
-        </Sider>
-
-        {/* 右侧：顶栏 + 内容区域 */}
-        <Layout>
-          {/* 顶部栏 */}
-          <Header isDark={isDark} onToggleTheme={toggleTheme} />
-
-          {/* 页面内容 */}
-          <Content
-            style={{
-              padding: 24,
-              backgroundColor: 'var(--bg-app)',
-              minHeight: 'calc(100vh - var(--header-height))',
-              overflow: 'auto',
-            }}
-          >
-            <Outlet />
-          </Content>
-        </Layout>
+          <Outlet />
+        </Content>
       </Layout>
     </ConfigProvider>
   )
