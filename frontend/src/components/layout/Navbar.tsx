@@ -9,7 +9,7 @@ import {
   BulbOutlined,
   StockOutlined,
   AimOutlined,
-  TeamOutlined,
+  StarOutlined,
   ReadOutlined,
   MoonOutlined,
   SunOutlined,
@@ -20,13 +20,13 @@ interface NavbarProps {
   onToggleTheme: () => void
 }
 
-/** 导航项配置（策略 & 回测合并为一个入口） */
+/** 导航项配置：市场行情 → 价值投资 → 自选股 → 回测 → 资讯 */
 const NAV_ITEMS = [
-  { key: '/philosophy', icon: <BulbOutlined />, label: '投资理念' },
-  { key: '/market',     icon: <StockOutlined />, label: '市场行情' },
-  { key: '/strategy',   icon: <AimOutlined />,   label: '策略 & 回测' },
-  { key: '/community',  icon: <TeamOutlined />,  label: '交流广场' },
-  { key: '/news',       icon: <ReadOutlined />,  label: '资讯' },
+  { key: '/market',         icon: <StockOutlined />, label: '市场行情' },
+  { key: '/value-investing', icon: <BulbOutlined />,  label: '价值投资' },
+  { key: '/watchlist',      icon: <StarOutlined />,   label: '自选股' },
+  { key: '/backtest',       icon: <AimOutlined />,    label: '回测' },
+  { key: '/news',           icon: <ReadOutlined />,   label: '资讯' },
 ]
 
 export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {

@@ -1,14 +1,24 @@
 /**
  * 行情页面
+ * 多市场行情 — A股（已接入）、美股/港股/韩股/日经（数据接入中）
  * 股票搜索 → 分页表格 → 点击查看K线图（ECharts 蜡烛图）
  */
 import { useState, useCallback } from 'react'
-import { Input, Select, Table, Spin, Empty, Tag } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
+import { Input, Select, Table, Spin, Empty, Tag, Tabs } from 'antd'
+import { SearchOutlined, StockOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import ReactECharts from 'echarts-for-react'
 import apiClient from '../../services/api'
 import type { StockItem, KLineItem } from '../../types/stock'
+
+/** 支持的市场列表 */
+const MARKET_TABS = [
+  { key: 'CN', label: '🏛️ A股', status: 'live' },
+  { key: 'US', label: '🇺🇸 美股', status: 'coming' },
+  { key: 'HK', label: '🇭🇰 港股', status: 'coming' },
+  { key: 'KR', label: '🇰🇷 韩股', status: 'coming' },
+  { key: 'JP', label: '🇯🇵 日经', status: 'coming' },
+]
 
 const MARKET_OPTIONS = [
   { value: '', label: '全部市场' },
@@ -27,6 +37,9 @@ function getDefaultDateRange() {
 }
 
 export default function MarketPage() {
+  // ---- 市场 Tab ----
+  const [marketTab, setMarketTab] = useState('CN')
+
   // ---- 搜索 & 列表状态 ----
   const [search, setSearch] = useState('')
   const [market, setMarket] = useState('')
@@ -173,77 +186,129 @@ export default function MarketPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">📈 行情</h1>
+      <h1 className="text-2xl font-bold mb-4">📈 市场行情</h1>
 
-      {/* 搜索栏 */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-        <Input
-          placeholder="搜索股票代码或名称..."
-          prefix={<SearchOutlined />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onPressEnter={() => fetchStocks(1, pageSize)}
-          style={{ maxWidth: 320 }}
-          allowClear
-        />
-        <Select
-          options={MARKET_OPTIONS}
-          value={market}
-          onChange={(v) => { setMarket(v); setPage(1) }}
-          style={{ width: 120 }}
-        />
-        <button
-          className="px-4 py-1 rounded"
-          style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
-          onClick={() => fetchStocks(1, pageSize)}
-        >
-          搜索
-        </button>
-      </div>
+      {/* 市场切换 Tab */}
+      <Tabs
+        activeKey={marketTab}
+        onChange={setMarketTab}
+        items={MARKET_TABS.map((tab) => {
+          const isLive = tab.status === 'live'
+          return {
+            key: tab.key,
+            label: (
+              <span className="flex items-center gap-1">
+                {tab.label}
+                {!isLive && (
+                  <Tag
+                    color="default"
+                    style={{ fontSize: 10, margin: 0, padding: '0 4px', lineHeight: '16px' }}
+                  >
+                    接入中
+                  </Tag>
+                )}
+              </span>
+            ),
+            children: isLive ? (
+              /* ====== A股内容 ====== */
+              <div className="mt-2">
+                {/* 搜索栏 */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                  <Input
+                    placeholder="搜索股票代码或名称..."
+                    prefix={<SearchOutlined />}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onPressEnter={() => fetchStocks(1, pageSize)}
+                    style={{ maxWidth: 320 }}
+                    allowClear
+                  />
+                  <Select
+                    options={MARKET_OPTIONS}
+                    value={market}
+                    onChange={(v) => { setMarket(v); setPage(1) }}
+                    style={{ width: 120 }}
+                  />
+                  <button
+                    className="px-4 py-1 rounded"
+                    style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
+                    onClick={() => fetchStocks(1, pageSize)}
+                  >
+                    搜索
+                  </button>
+                </div>
 
-      {/* 股票表格 */}
-      <Table<StockItem>
-        rowKey="code"
-        columns={columns}
-        dataSource={stocks}
-        loading={loading}
-        pagination={{
-          current: page,
-          pageSize,
-          total,
-          showTotal: (t) => `共 ${t} 只股票`,
-          showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50'],
-          onChange: (p, ps) => fetchStocks(p, ps),
-        }}
-        onRow={(record) => ({
-          onClick: () => handleRowClick(record),
-          style: { cursor: 'pointer' },
+                {/* 股票表格 */}
+                <Table<StockItem>
+                  rowKey="code"
+                  columns={columns}
+                  dataSource={stocks}
+                  loading={loading}
+                  pagination={{
+                    current: page,
+                    pageSize,
+                    total,
+                    showTotal: (t) => `共 ${t} 只股票`,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50'],
+                    onChange: (p, ps) => fetchStocks(p, ps),
+                  }}
+                  onRow={(record) => ({
+                    onClick: () => handleRowClick(record),
+                    style: { cursor: 'pointer' },
+                  })}
+                  rowClassName={(record) =>
+                    selectedStock?.code === record.code ? 'ant-table-row-selected' : ''
+                  }
+                  scroll={{ x: 600 }}
+                  size="middle"
+                />
+
+                {/* K线图区域 */}
+                {selectedStock && (
+                  <div style={{ marginTop: 24, padding: 16, background: 'var(--bg-surface)', borderRadius: 8 }}>
+                    <h2 className="text-lg font-bold mb-2">
+                      {selectedStock.name} ({selectedStock.code}) — 日K线
+                    </h2>
+                    {klineLoading ? (
+                      <div style={{ textAlign: 'center', padding: 80 }}>
+                        <Spin size="large" />
+                      </div>
+                    ) : klines.length === 0 ? (
+                      <Empty description="暂无K线数据" />
+                    ) : (
+                      <ReactECharts option={getChartOption()} style={{ height: 480 }} />
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ====== 未接入市场占位 ====== */
+              <div
+                className="mt-2 rounded-lg flex flex-col items-center justify-center"
+                style={{
+                  padding: 80,
+                  background: 'var(--bg-surface)',
+                  border: '2px dashed var(--border-color)',
+                  textAlign: 'center',
+                }}
+              >
+                <StockOutlined style={{ fontSize: 56, color: 'var(--text-secondary)', opacity: 0.25 }} />
+                <h3 className="text-lg font-semibold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {tab.label.replace(/^[^\s]+\s/, '')}行情即将上线
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', maxWidth: 400 }}>
+                  数据源接入开发中。届时将支持股票搜索、分页浏览和 K 线蜡烛图，与 A 股体验一致。
+                </p>
+              </div>
+            ),
+          }
         })}
-        rowClassName={(record) =>
-          selectedStock?.code === record.code ? 'ant-table-row-selected' : ''
-        }
-        scroll={{ x: 600 }}
-        size="middle"
+        tabBarStyle={{
+          marginBottom: 8,
+          borderBottom: '1px solid var(--border-color)',
+        }}
       />
-
-      {/* K线图区域 */}
-      {selectedStock && (
-        <div style={{ marginTop: 24, padding: 16, background: 'var(--bg-surface)', borderRadius: 8 }}>
-          <h2 className="text-lg font-bold mb-2">
-            {selectedStock.name} ({selectedStock.code}) — 日K线
-          </h2>
-          {klineLoading ? (
-            <div style={{ textAlign: 'center', padding: 80 }}>
-              <Spin size="large" />
-            </div>
-          ) : klines.length === 0 ? (
-            <Empty description="暂无K线数据" />
-          ) : (
-            <ReactECharts option={getChartOption()} style={{ height: 480 }} />
-          )}
-        </div>
-      )}
     </div>
   )
 }

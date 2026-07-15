@@ -3,22 +3,22 @@ import AppLayout from './components/layout/AppLayout'
 
 // 页面导入
 import LoginPage from './pages/Login/LoginPage'
-import PhilosophyPage from './pages/Philosophy/PhilosophyPage'
+import ValueInvestingPage from './pages/ValueInvesting/ValueInvestingPage'
 import MarketPage from './pages/Market/MarketPage'
-import StrategyPage from './pages/Strategy/StrategyPage'
-import CommunityPage from './pages/Community/CommunityPage'
+import WatchlistPage from './pages/Watchlist/WatchlistPage'
+import BacktestPage from './pages/Backtest/BacktestPage'
 import NewsPage from './pages/News/NewsPage'
 
 /**
  * App 根组件
  *
  * 路由结构：
- *   /             → 登录页（独立布局）
- *   /philosophy   → 投资理念
- *   /market       → 市场行情
- *   /strategy     → 策略 & 回测（标签页切换）
- *   /community    → 交流广场
- *   /news         → 资讯
+ *   /                  → 登录页（独立布局）
+ *   /market            → 市场行情（A股/美股/港股/韩股/日经）
+ *   /value-investing   → 价值投资（经典语录、书籍、访谈视频）
+ *   /watchlist         → 自选股
+ *   /backtest          → 回测（策略管理 + 回测执行）
+ *   /news              → 资讯（重大消息、热点、财报）
  *
  * 登录后进入 AppLayout 包裹的功能页面（顶栏导航 + 内容区）
  */
@@ -31,10 +31,10 @@ export default function App() {
 
         {/* AppLayout 提供顶栏导航骨架，<Outlet /> 渲染子路由 */}
         <Route element={<AppLayout />}>
-          <Route path="philosophy" element={<PhilosophyPage />} />
           <Route path="market" element={<MarketPage />} />
-          <Route path="strategy" element={<StrategyPage />} />
-          <Route path="community" element={<CommunityPage />} />
+          <Route path="value-investing" element={<ValueInvestingPage />} />
+          <Route path="watchlist" element={<WatchlistPage />} />
+          <Route path="backtest" element={<BacktestPage />} />
           <Route path="news" element={<NewsPage />} />
         </Route>
 

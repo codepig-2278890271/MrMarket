@@ -1,5 +1,5 @@
 /**
- * 投资理念页面
+ * 价值投资页面
  *
  * 价值投资资源中心 — 提供经典书籍、视频推荐、重要文献、
  * 大师语录和核心概念的阅读与学习。
@@ -21,7 +21,7 @@ import {
   DOCUMENTS,
   QUOTES,
   CONCEPTS,
-} from './philosophyData'
+} from './valueInvestingData'
 
 // ==================== 标签页配置 ====================
 
@@ -59,7 +59,7 @@ function HeroSection() {
             className="text-2xl font-bold mb-3"
             style={{ color: COLORS.primary }}
           >
-            💡 市场先生寓言
+            💡 价值投资
           </h1>
           <blockquote
             className="border-l-4 pl-4 mb-3 text-base leading-relaxed"
