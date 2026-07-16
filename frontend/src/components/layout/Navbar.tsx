@@ -1,6 +1,6 @@
 /**
  * 顶部导航栏
- * 品牌 Logo + 5 个导航项 + 主题切换
+ * 品牌 Logo + 6 个等宽导航项 + 主题切换
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -11,6 +11,7 @@ import {
   AimOutlined,
   StarOutlined,
   ReadOutlined,
+  RobotOutlined,
   MoonOutlined,
   SunOutlined,
 } from '@ant-design/icons'
@@ -20,25 +21,24 @@ interface NavbarProps {
   onToggleTheme: () => void
 }
 
-/** 导航项配置：市场行情 → 价值投资 → 自选股 → 回测 → 资讯 */
 const NAV_ITEMS = [
-  { key: '/market',         icon: <StockOutlined />, label: '市场行情' },
+  { key: '/market',          icon: <StockOutlined />, label: '市场行情' },
   { key: '/value-investing', icon: <BulbOutlined />,  label: '价值投资' },
-  { key: '/watchlist',      icon: <StarOutlined />,   label: '自选股' },
-  { key: '/backtest',       icon: <AimOutlined />,    label: '回测' },
-  { key: '/news',           icon: <ReadOutlined />,   label: '资讯' },
+  { key: '/watchlist',       icon: <StarOutlined />,  label: '自选股' },
+  { key: '/backtest',        icon: <AimOutlined />,   label: '回测' },
+  { key: '/ai',              icon: <RobotOutlined />, label: 'AI' },
+  { key: '/news',            icon: <ReadOutlined />,  label: '资讯' },
 ]
 
 export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // 当前激活的路由
   const activeKey = '/' + location.pathname.split('/')[1]
 
   return (
     <nav
-      className="flex items-center justify-between px-6"
+      className="flex items-center px-6"
       style={{
         height: 'var(--navbar-height)',
         minHeight: 'var(--navbar-height)',
@@ -47,8 +47,8 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
         flexShrink: 0,
       }}
     >
-      {/* ---- 左侧：Logo ---- */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      {/* ---- Logo ---- */}
+      <div className="flex items-center gap-2 flex-shrink-0" style={{ width: 140 }}>
         <span
           className="text-lg font-bold cursor-pointer select-none"
           style={{ color: 'var(--color-primary)' }}
@@ -64,16 +64,18 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
         </span>
       </div>
 
-      {/* ---- 中间：导航菜单 ---- */}
-      <div className="flex items-center gap-1">
+      {/* ---- 导航菜单：6 项均等宽度撑满剩余空间 ---- */}
+      <div className="flex items-center flex-1 mx-4">
         {NAV_ITEMS.map((item) => {
           const isActive = activeKey === item.key
           return (
             <button
               key={item.key}
               onClick={() => navigate(item.key)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors border-none cursor-pointer"
+              className="flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium transition-colors border-none cursor-pointer"
               style={{
+                flex: '1 1 0',
+                minWidth: 0,
                 color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)',
                 background: isActive ? 'var(--color-primary-bg)' : 'transparent',
               }}
@@ -97,8 +99,8 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
         })}
       </div>
 
-      {/* ---- 右侧：主题切换 ---- */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      {/* ---- 主题切换 ---- */}
+      <div className="flex items-center justify-end flex-shrink-0" style={{ width: 60 }}>
         <Tooltip title={isDark ? '切换浅色模式' : '切换深色模式'}>
           <button
             onClick={onToggleTheme}

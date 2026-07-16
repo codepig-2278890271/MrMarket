@@ -130,9 +130,3 @@ async def health_check():
 # ================================================================
 
 app.include_router(v1_router, prefix=settings.api_prefix)
-
-# TODO: 逐步接入其余路由模块
-# from app.api.v1.endpoints import news, backtest, trade
-# app.include_router(news.router, prefix=settings.api_prefix)
-# app.include_router(backtest.router, prefix=settings.api_prefix)
-# app.include_router(trade.router, prefix=settings.api_prefix)

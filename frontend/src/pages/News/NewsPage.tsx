@@ -67,7 +67,7 @@ const BIG_NEWS: NewsItem[] = [
   },
 ]
 
-// ==================== 财报日历占位 ====================
+// ==================== 财报日历 ====================
 
 const EARNINGS_SEASONS = [
   { period: '2025年半年报', window: '7月–8月', status: '即将开始' },
@@ -75,7 +75,7 @@ const EARNINGS_SEASONS = [
   { period: '2024年年报', window: '1月–4月', status: '已结束' },
 ]
 
-// ==================== 投资箴言轮换 ====================
+// ==================== 每日箴言 ====================
 
 const DAILY_QUOTE = {
   text: '机会不会单独出现，它总是伴随着不确定性。投资的艺术就在于区分哪些不确定性是暂时的，哪些是永久性的。',
@@ -92,9 +92,7 @@ export default function NewsPage() {
 
       <div
         className="grid gap-6"
-        style={{
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-        }}
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}
       >
         {/* 左列：重大消息 */}
         <div>
@@ -138,7 +136,7 @@ export default function NewsPage() {
           </Card>
         </div>
 
-        {/* 右列：财报日历 + 其他 */}
+        {/* 右列：财报日历 + 每日箴言 */}
         <div className="flex flex-col gap-6">
           {/* 财报日历 */}
           <Card
@@ -181,7 +179,7 @@ export default function NewsPage() {
             </p>
           </Card>
 
-          {/* 今日箴言 */}
+          {/* 每日箴言 */}
           <Card
             title={
               <span className="flex items-center gap-2">
