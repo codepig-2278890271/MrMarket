@@ -29,7 +29,7 @@ from app.integrations.akshare import fetch_stock_list, fetch_kline_daily
 from app.services.sync_service import SyncService
 
 # 限流配置：每次 API 调用间隔（秒），避免被数据源封 IP
-RATE_LIMIT_SECONDS = 0.5
+RATE_LIMIT_SECONDS = 1.5
 
 
 async def sync_stocks():
@@ -107,7 +107,7 @@ async def main():
         await sync_stocks()
 
     elif cmd == "kline":
-        limit = 999999 if "--all" in sys.argv else 100
+        limit = 999999 if "--all" in sys.argv else 50
         await sync_klines(limit=limit)
 
     elif cmd == "all":

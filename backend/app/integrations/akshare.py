@@ -71,48 +71,59 @@ class AkshareFetcher(BaseFetcher):
     def fetch_kline_daily(
         self,
         stock_code: str,
+        market: str = "SH",
         start_date: date | None = None,
         end_date: date | None = None,
     ) -> list[dict]:
-        """拉取单只股票的日K线数据（前复权）"""
+        """拉取单只股票的日K线数据（前复权），使用新浪数据源，更稳定"""
         if end_date is None:
             end_date = date.today()
         if start_date is None:
             start_date = end_date - timedelta(days=730)
 
-        try:
-            df = ak.stock_zh_a_hist(
-                symbol=stock_code,
-                period="daily",
-                start_date=start_date.strftime("%Y%m%d"),
-                end_date=end_date.strftime("%Y%m%d"),
-                adjust="qfq",
-            )
+        # stock_zh_a_daily 需要 sh600519 格式的前缀
+        prefix = {"SH": "sh", "SZ": "sz", "BJ": "bj"}.get(market, "sh")
+        symbol = f"{prefix}{stock_code}"
 
-            if df.empty:
+        import time
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                df = ak.stock_zh_a_daily(
+                    symbol=symbol,
+                    start_date=start_date.strftime("%Y%m%d"),
+                    end_date=end_date.strftime("%Y%m%d"),
+                    adjust="qfq",
+                )
+
+                if df is None or df.empty:
+                    return []
+
+                klines = []
+                prev_close = None
+                for _, row in df.iterrows():
+                    cur_close = float(row["close"])
+                    klines.append({
+                        "trade_date": self._parse_date(row["date"]),
+                        "open": float(row["open"]),
+                        "close": cur_close,
+                        "high": float(row["high"]),
+                        "low": float(row["low"]),
+                        "pre_close": prev_close if prev_close is not None else float(row.get("pre_close", cur_close)),
+                        "volume": int(row["volume"]),
+                        "amount": float(row.get("amount", 0) or 0),
+                        "turnover_rate": float(row.get("turnover_rate", 0) or 0),
+                    })
+                    prev_close = cur_close
+
+                return klines
+
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    continue
+                logger.error(f"  拉取 {stock_code} K线失败: {e}")
                 return []
-
-            klines = []
-            for _, row in df.iterrows():
-                klines.append({
-                    "trade_date": self._parse_date(row["日期"]),
-                    "open": float(row["开盘"]),
-                    "close": float(row["收盘"]),
-                    "high": float(row["最高"]),
-                    "low": float(row["最低"]),
-                    "volume": int(row["成交量"]),
-                    "amount": float(row["成交额"]),
-                    "amplitude": float(row.get("振幅", 0) or 0),
-                    "change_pct": float(row.get("涨跌幅", 0) or 0),
-                    "change": float(row.get("涨跌额", 0) or 0),
-                    "turnover_rate": float(row.get("换手率", 0) or 0),
-                })
-
-            return klines
-
-        except Exception as e:
-            logger.error(f"  拉取 {stock_code} K线失败: {e}")
-            return []
 
     @staticmethod
     def _parse_date(val) -> date | None:
@@ -145,9 +156,9 @@ def fetch_stock_list() -> list[dict]:
 
 def fetch_kline_daily(
     stock_code: str,
-    market: str = "",
+    market: str = "SH",
     start_date: date | None = None,
     end_date: date | None = None,
 ) -> list[dict]:
     """拉取单只股票的日K线数据（兼容旧 API）"""
-    return _fetcher.fetch_kline_daily(stock_code, start_date=start_date, end_date=end_date)
+    return _fetcher.fetch_kline_daily(stock_code, market=market, start_date=start_date, end_date=end_date)
