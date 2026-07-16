@@ -63,12 +63,12 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
           onClick={() => navigate('/market')}
           className="text-lg font-bold cursor-pointer select-none flex-shrink-0"
           style={{
-            color: 'var(--color-primary)',
             letterSpacing: '-0.3px',
             marginRight: 32,
           }}
         >
-          MrMarket
+          <span style={{ color: '#16a34a' }}>Mr</span>
+          <span style={{ color: '#dc2626' }}>Market</span>
         </span>
 
         {/* ---- 导航菜单：6 项均等宽度 ---- */}
