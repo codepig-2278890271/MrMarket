@@ -1,10 +1,10 @@
 /**
- * AI 投资助手 — 极简对话框
+ * AI 投资助手 — ChatGPT 风格布局 + 卡通市场先生形象
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Input, Button } from 'antd'
-import { SendOutlined, RobotOutlined, UserOutlined } from '@ant-design/icons'
+import { Button } from 'antd'
+import { SendOutlined } from '@ant-design/icons'
 
 // ================================================================
 // 类型 & 工具
@@ -45,43 +45,70 @@ async function* parseSSEStream(response: Response): AsyncGenerator<string> {
 }
 
 // ================================================================
-// 单条消息
+// 卡通市场先生 SVG
+// ================================================================
+
+function Mascot() {
+  return (
+    <span style={{ fontSize: 72, lineHeight: 1 }}>🐌</span>
+  )
+}
+
+// ================================================================
+// 单条消息 — ChatGPT 风格
 // ================================================================
 
 function ChatMessage({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user'
   return (
     <div
-      className={`flex gap-2 ${isUser ? 'flex-row-reverse' : ''}`}
-      style={{ alignItems: 'flex-start', marginBottom: 16 }}
+      style={{
+        padding: '20px 0',
+        borderBottom: isUser ? 'none' : '1px solid var(--border-color)',
+        background: isUser ? 'transparent' : 'var(--bg-surface)',
+      }}
     >
       <div
-        className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs"
-        style={{
-          background: isUser ? '#dc2626' : '#16a34a',
-          color: '#fff',
-        }}
+        className="flex gap-4"
+        style={{ maxWidth: 768, margin: '0 auto', padding: '0 24px' }}
       >
-        {isUser ? <UserOutlined /> : <RobotOutlined />}
-      </div>
-      <div
-        className="max-w-[80%] rounded-lg px-3.5 py-2.5 text-sm"
-        style={{
-          background: isUser ? '#dc2626' : 'var(--bg-surface)',
-          color: isUser ? '#fff' : 'var(--text-primary)',
-          border: isUser ? 'none' : '1px solid var(--border-color)',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          lineHeight: 1.7,
-        }}
-      >
-        {msg.content}
-        {msg.isStreaming && (
-          <span
-            className="inline-block w-1.5 h-4 ml-0.5 animate-pulse"
-            style={{ background: 'var(--text-secondary)', verticalAlign: 'text-bottom' }}
-          />
-        )}
+        {/* 头像 */}
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-sm flex items-center justify-center"
+          style={{
+            background: isUser ? '#dc2626' : '#16a34a',
+            borderRadius: isUser ? '50%' : '2px',
+          }}
+        >
+          {isUser ? (
+            <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>你</span>
+          ) : (
+            <span style={{ color: '#fff', fontSize: 13 }}>🐌</span>
+          )}
+        </div>
+
+        {/* 消息内容 */}
+        <div
+          className="flex-1 text-sm"
+          style={{
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            lineHeight: 1.8,
+            color: 'var(--text-primary)',
+            minWidth: 0,
+          }}
+        >
+          <p style={{ margin: 0, fontWeight: 700, marginBottom: 4, fontSize: 13, color: 'var(--text-secondary)' }}>
+            {isUser ? '你' : '市场先生'}
+          </p>
+          <div style={{ margin: 0 }}>{msg.content}</div>
+          {msg.isStreaming && (
+            <span
+              className="inline-block w-1.5 h-4 ml-0.5 animate-pulse"
+              style={{ background: 'var(--text-secondary)', verticalAlign: 'text-bottom' }}
+            />
+          )}
+        </div>
       </div>
     </div>
   )
@@ -96,7 +123,6 @@ export default function AIChatPage() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<any>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   const scrollToBottom = useCallback(() => {
@@ -159,20 +185,21 @@ export default function AIChatPage() {
   }, [messages, isLoading])
 
   return (
-    <div style={{ height: 'calc(100vh - var(--navbar-height) - 2px)', display: 'flex', flexDirection: 'column', maxWidth: 720, margin: '0 auto', padding: '0 16px' }}>
-      {/* 消息列表 */}
-      <div
-        style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '16px 0',
-        }}
-      >
+    <div style={{ height: 'calc(100vh - var(--navbar-height) - 2px)', display: 'flex', flexDirection: 'column' }}>
+      {/* 消息区域 */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full" style={{ opacity: 0.35 }}>
-            <RobotOutlined style={{ fontSize: 48, color: '#16a34a', marginBottom: 12 }} />
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              有什么投资问题尽管问我
+          /* 空状态 — 居中展示卡通形象 */
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{ height: '100%', gap: 16 }}
+          >
+            <Mascot />
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>
+              你好，我是市场先生
+            </h2>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center', maxWidth: 360 }}>
+              我可以帮你分析公司、解读财报、评估估值、讨论投资理念。有什么想聊的？
             </p>
           </div>
         ) : (
@@ -181,51 +208,75 @@ export default function AIChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 输入栏 */}
-      <div
-        className="flex gap-2 py-3"
-        style={{ borderTop: '1px solid var(--border-color)', background: 'var(--bg-app)' }}
-      >
-        <Input.TextArea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onPressEnter={(e) => {
-            if (!e.shiftKey) {
-              e.preventDefault()
-              sendMessage(input)
-            }
+      {/* 底部输入栏 — ChatGPT 风格 */}
+      <div style={{ padding: '0 24px 16px' }}>
+        <div
+          className="flex gap-3"
+          style={{
+            maxWidth: 768,
+            margin: '0 auto',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 16,
+            padding: '8px 8px 8px 20px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           }}
-          placeholder="输入你的问题… (Enter 发送，Shift+Enter 换行)"
-          autoSize={{ minRows: 1, maxRows: 4 }}
-          disabled={isLoading}
-          style={{ flex: 1 }}
-        />
-        {isLoading ? (
-          <Button
-            danger
-            type="primary"
-            onClick={() => abortRef.current?.abort()}
-            style={{ height: 'auto', minHeight: 40 }}
-          >
-            停止
-          </Button>
-        ) : (
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim()}
-            style={{
-              background: '#16a34a',
-              borderColor: '#16a34a',
-              height: 'auto',
-              minHeight: 40,
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                sendMessage(input)
+              }
             }}
-          >
-            发送
-          </Button>
-        )}
+            placeholder="向市场先生提问…"
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontSize: 15,
+              color: 'var(--text-primary)',
+              padding: '6px 0',
+            }}
+          />
+          {isLoading ? (
+            <Button
+              danger
+              onClick={() => abortRef.current?.abort()}
+              style={{ borderRadius: 10, height: 36, fontWeight: 600 }}
+            >
+              停止生成
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={() => sendMessage(input)}
+              disabled={!input.trim()}
+              style={{
+                background: '#16a34a',
+                borderColor: '#16a34a',
+                borderRadius: 10,
+                height: 36,
+                width: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+              }}
+            />
+          )}
+        </div>
+        <p
+          className="text-xs text-center mt-2"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          市场先生仅提供参考，不构成投资建议
+        </p>
       </div>
     </div>
   )

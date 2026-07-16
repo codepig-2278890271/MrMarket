@@ -12,7 +12,6 @@ import {
   AimOutlined,
   StarOutlined,
   ReadOutlined,
-  RobotOutlined,
   MoonOutlined,
   SunOutlined,
 } from '@ant-design/icons'
@@ -23,12 +22,12 @@ interface NavbarProps {
 }
 
 const NAV_ITEMS = [
-  { key: '/market',          icon: <StockOutlined />, label: '市场行情' },
-  { key: '/value-investing', icon: <BulbOutlined />,  label: '价值投资' },
-  { key: '/watchlist',       icon: <StarOutlined />,  label: '自选股' },
-  { key: '/backtest',        icon: <AimOutlined />,   label: '回测' },
-  { key: '/ai',              icon: <RobotOutlined />, label: 'AI' },
-  { key: '/news',            icon: <ReadOutlined />,  label: '资讯' },
+  { key: '/market',          icon: <StockOutlined />, label: '市场行情', color: '#dc2626' },
+  { key: '/value-investing', icon: <BulbOutlined />,  label: '价值投资', color: '#f59e0b' },
+  { key: '/watchlist',       icon: <StarOutlined />,  label: '自选股',   color: '#eab308' },
+  { key: '/backtest',        icon: <AimOutlined />,   label: '回测',     color: '#3b82f6' },
+  { key: '/ai',              icon: <span style={{ fontSize: 15 }}>🐌</span>, label: 'AI', color: '#16a34a' },
+  { key: '/news',            icon: <ReadOutlined />,  label: '资讯',     color: '#8b5cf6' },
 ]
 
 export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
@@ -103,7 +102,7 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
                   }
                 }}
               >
-                {item.icon}
+                <span style={{ color: item.color, display: 'inline-flex', alignItems: 'center', fontSize: 16 }}>{item.icon}</span>
                 <span>{item.label}</span>
               </button>
             )

@@ -229,7 +229,7 @@ const styles: Record<string, React.CSSProperties> = {
   tagline: {
     fontSize: 14,
     fontStyle: 'italic',
-    color: RED,
+    color: '#1a1a1a',
     margin: 0,
   },
 
