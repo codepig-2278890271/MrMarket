@@ -6,6 +6,7 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import quotesRaw from './quotes.txt?raw'
 
 /** 红绿配色常量 — 全页面只有这两个色值 */
 const RED = '#dc2626'
@@ -16,6 +17,15 @@ const GREEN_DARK = '#15803d'
 export default function LoginPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+
+  // 从 quotes.txt 随机选一条，只在首次渲染时选取
+  const [quote] = useState(() => {
+    const quotes = quotesRaw
+      .split('\n')
+      .map((q) => q.trim())
+      .filter((q) => q.length > 0)
+    return quotes[Math.floor(Math.random() * quotes.length)]
+  })
 
   const handleLogin = () => {
     setLoading(true)
@@ -40,8 +50,8 @@ export default function LoginPage() {
             <span style={{ ...styles.logoArrowDown, borderTopColor: GREEN }} />
           </div>
           <h1 style={styles.title}>
-            <span style={{ color: RED }}>Mr</span>
-            <span style={{ color: GREEN }}>Market</span>
+            <span style={{ color: GREEN }}>Mr</span>
+            <span style={{ color: RED }}>Market</span>
           </h1>
           <p style={styles.subtitle}>市场先生</p>
         </div>
@@ -54,17 +64,17 @@ export default function LoginPage() {
           <span style={{ ...styles.dividerLine, background: GREEN }} />
         </div>
 
-        {/* 标语 */}
+        {/* 随机标语 */}
         <p style={styles.tagline}>
-          股价短期是投票机，长期是称重机
+          {quote}
         </p>
 
         {/* 登录按钮 */}
         <button
           style={{
             ...styles.loginBtn,
-            background: loading ? GREEN_DARK : GREEN,
-            borderColor: loading ? GREEN_DARK : GREEN_DARK,
+            background: loading ? RED : GREEN,
+            borderColor: loading ? RED_DARK : GREEN_DARK,
           }}
           onClick={handleLogin}
           disabled={loading}
@@ -73,7 +83,7 @@ export default function LoginPage() {
             e.currentTarget.style.borderColor = RED_DARK
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = loading ? GREEN_DARK : GREEN
+            e.currentTarget.style.background = loading ? RED : GREEN
             e.currentTarget.style.borderColor = GREEN_DARK
           }}
         >
@@ -83,7 +93,7 @@ export default function LoginPage() {
         {/* 底部提示 */}
         <p style={styles.footer}>
           <span style={{ color: RED }}>A 股</span>
-          <span style={{ color: GREEN }}> 价值投资辅助分析工具</span>
+          <span style={{ color: RED }}> 价值投资辅助分析工具</span>
         </p>
       </div>
     </div>
