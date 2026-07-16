@@ -25,7 +25,7 @@
   /* 背景 */
   --bg-app: #f8fafc;
   --bg-surface: #ffffff;
-  --navbar-bg: #ffffff;
+  --navbar-bg: rgba(255, 255, 255, 0.85);
 
   /* 文字 */
   --text-primary: #0f172a;
@@ -36,13 +36,17 @@
 
   /* 间距 */
   --navbar-height: 52px;
+
+  /* 内容区 */
+  --content-max-width: 1200px;
+  --content-padding: 32px;
 }
 
 /* ---------- CSS 变量：深色模式 ---------- */
 .dark {
   --bg-app: #0f172a;
   --bg-surface: #1e293b;
-  --navbar-bg: #1e293b;
+  --navbar-bg: rgba(30, 41, 59, 0.85);
 
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;

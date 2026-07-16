@@ -1,6 +1,7 @@
 /**
  * 顶部导航栏
  * 品牌 Logo + 6 个等宽导航项 + 主题切换
+ * 内容居中，与页面最大宽度对齐
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -38,82 +39,95 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
 
   return (
     <nav
-      className="flex items-center px-6"
       style={{
         height: 'var(--navbar-height)',
-        minHeight: 'var(--navbar-height)',
         backgroundColor: 'var(--navbar-bg)',
         borderBottom: '1px solid var(--border-color)',
         flexShrink: 0,
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        backdropFilter: 'blur(12px)',
       }}
     >
-      {/* ---- Logo ---- */}
-      <div className="flex items-center gap-2 flex-shrink-0" style={{ width: 140 }}>
+      <div
+        className="flex items-center h-full"
+        style={{
+          maxWidth: 'var(--content-max-width)',
+          margin: '0 auto',
+          padding: '0 var(--content-padding)',
+        }}
+      >
+        {/* ---- Logo ---- */}
         <span
-          className="text-lg font-bold cursor-pointer select-none"
-          style={{ color: 'var(--color-primary)' }}
           onClick={() => navigate('/market')}
+          className="text-lg font-bold cursor-pointer select-none flex-shrink-0"
+          style={{
+            color: 'var(--color-primary)',
+            letterSpacing: '-0.3px',
+            marginRight: 32,
+          }}
         >
           MrMarket
         </span>
-        <span
-          className="text-xs px-1.5 py-0.5 rounded select-none"
-          style={{ color: 'var(--text-secondary)', background: 'var(--bg-app)' }}
-        >
-          BETA
-        </span>
-      </div>
 
-      {/* ---- 导航菜单：6 项均等宽度撑满剩余空间 ---- */}
-      <div className="flex items-center flex-1 mx-4">
-        {NAV_ITEMS.map((item) => {
-          const isActive = activeKey === item.key
-          return (
-            <button
-              key={item.key}
-              onClick={() => navigate(item.key)}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium transition-colors border-none cursor-pointer"
-              style={{
-                flex: '1 1 0',
-                minWidth: 0,
-                color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)',
-                background: isActive ? 'var(--color-primary-bg)' : 'transparent',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.color = 'var(--text-primary)'
-                  e.currentTarget.style.background = 'var(--bg-app)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.color = 'var(--text-secondary)'
-                  e.currentTarget.style.background = 'transparent'
-                }
-              }}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          )
-        })}
-      </div>
+        {/* ---- 导航菜单：6 项均等宽度 ---- */}
+        <div className="flex items-center flex-1" style={{ height: '100%' }}>
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeKey === item.key
+            return (
+              <button
+                key={item.key}
+                onClick={() => navigate(item.key)}
+                className="flex items-center justify-center gap-1.5 text-sm font-medium border-none cursor-pointer"
+                style={{
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  height: '100%',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  background: 'transparent',
+                  borderBottom: isActive
+                    ? '2px solid var(--color-primary)'
+                    : '2px solid transparent',
+                  marginBottom: -1,
+                  transition: 'color 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = 'var(--text-primary)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = 'var(--text-secondary)'
+                  }
+                }}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            )
+          })}
+        </div>
 
-      {/* ---- 主题切换 ---- */}
-      <div className="flex items-center justify-end flex-shrink-0" style={{ width: 60 }}>
-        <Tooltip title={isDark ? '切换浅色模式' : '切换深色模式'}>
+        {/* ---- 主题切换 ---- */}
+        <Tooltip title={isDark ? '浅色模式' : '深色模式'}>
           <button
             onClick={onToggleTheme}
-            className="flex items-center justify-center w-8 h-8 rounded-md border-none cursor-pointer transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-lg border-none cursor-pointer flex-shrink-0"
             style={{
               color: 'var(--text-secondary)',
               background: 'transparent',
+              marginLeft: 24,
+              transition: 'background 0.15s, color 0.15s',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--bg-app)'
+              e.currentTarget.style.color = 'var(--text-primary)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--text-secondary)'
             }}
           >
             {isDark ? <SunOutlined /> : <MoonOutlined />}
