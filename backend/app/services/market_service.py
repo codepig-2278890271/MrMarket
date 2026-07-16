@@ -178,10 +178,10 @@ class MarketService:
     @staticmethod
     async def get_market_overview(db: AsyncSession, market: str | None = None) -> dict:
         """获取大盘概览：涨跌统计、成交额等"""
-        # 最新交易日
+        # 最新交易日（标量子查询）
         latest_date_sub = (
             select(func.max(KLineDaily.trade_date))
-            .subquery()
+            .scalar_subquery()
         )
 
         # 当日所有K线数据
