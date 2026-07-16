@@ -150,11 +150,11 @@ class MarketService:
         # 构建响应
         items = []
         for row in rows:
-            price = float(row.latest_price) if row.latest_price else None
-            pre_close = float(row.pre_close) if row.pre_close else None
+            price = float(row.latest_price) if row.latest_price is not None else None
+            pre_close = float(row.pre_close) if row.pre_close is not None else None
             change_pct = None
             change_amt = None
-            if price is not None and pre_close is not None and pre_close != 0:
+            if price is not None and pre_close is not None and pre_close > 0:
                 change_amt = round(price - pre_close, 3)
                 change_pct = round(change_amt / pre_close * 100, 2)
 
@@ -215,9 +215,12 @@ class MarketService:
                 case((kline_today.c.close == kline_today.c.pre_close, 1), else_=0)
             ).label("flat_count"),
             func.avg(
-                (kline_today.c.close - kline_today.c.pre_close)
-                / kline_today.c.pre_close
-                * 100
+                case(
+                    (kline_today.c.pre_close > 0,
+                     (kline_today.c.close - kline_today.c.pre_close)
+                     / kline_today.c.pre_close * 100),
+                    else_=None,
+                )
             ).label("avg_change"),
             func.sum(kline_today.c.volume).label("total_volume"),
             func.sum(kline_today.c.amount).label("total_amount"),

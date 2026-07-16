@@ -109,10 +109,10 @@ class AkshareFetcher(BaseFetcher):
                         "close": cur_close,
                         "high": float(row["high"]),
                         "low": float(row["low"]),
-                        "pre_close": prev_close if prev_close is not None else float(row.get("pre_close", cur_close)),
+                        "pre_close": prev_close if prev_close is not None else cur_close,
                         "volume": int(row["volume"]),
-                        "amount": float(row.get("amount", 0) or 0),
-                        "turnover_rate": float(row.get("turnover_rate", 0) or 0),
+                        "amount": float(row["amount"]) if row.get("amount") else 0.0,
+                        "turnover_rate": float(row["turnover"]) if row.get("turnover") else 0.0,
                     })
                     prev_close = cur_close
 
