@@ -6,6 +6,7 @@ AkShare 数据获取实现
 from datetime import date, timedelta
 
 import akshare as ak
+import pandas as pd
 from loguru import logger
 
 from app.integrations.base import BaseFetcher
@@ -103,6 +104,11 @@ class AkshareFetcher(BaseFetcher):
                 prev_close = None
                 for _, row in df.iterrows():
                     cur_close = float(row["close"])
+                    out_share = row.get("outstanding_share")
+                    out_share_int = int(out_share) if out_share and pd.notna(out_share) else None
+                    circulating_mcap = (
+                        cur_close * out_share_int if out_share_int else None
+                    )
                     klines.append({
                         "trade_date": self._parse_date(row["date"]),
                         "open": float(row["open"]),
@@ -113,6 +119,8 @@ class AkshareFetcher(BaseFetcher):
                         "volume": int(row["volume"]),
                         "amount": float(row["amount"]) if row.get("amount") else 0.0,
                         "turnover_rate": float(row["turnover"]) if row.get("turnover") else 0.0,
+                        "outstanding_share": out_share_int,
+                        "circulating_market_cap": circulating_mcap,
                     })
                     prev_close = cur_close
 

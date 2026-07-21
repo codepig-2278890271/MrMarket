@@ -93,6 +93,16 @@ class KLineDaily(Base):
         Numeric(8, 4), comment="换手率 %"
     )
 
+    # 流通股本（股）
+    outstanding_share: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True, comment="流通股本（股）"
+    )
+
+    # 流通市值（元）= close × outstanding_share
+    circulating_market_cap: Mapped[Decimal | None] = mapped_column(
+        Numeric(20, 2), nullable=True, comment="流通市值（元）"
+    )
+
     # 复权因子（前复权用）
     adj_factor: Mapped[Decimal | None] = mapped_column(
         Numeric(10, 6), comment="复权因子"

@@ -36,6 +36,7 @@ class StockWithPriceResponse(BaseModel):
     volume: int | None = None              # 成交量
     amount: float | None = None            # 成交额
     turnover_rate: float | None = None     # 换手率 %
+    circulating_market_cap: float | None = None  # 流通市值
     trade_date: date | None = None         # 最新交易日
 
 
@@ -52,6 +53,8 @@ class KLineResponse(BaseModel):
     volume: int
     amount: float
     turnover_rate: float | None = None
+    outstanding_share: int | None = None
+    circulating_market_cap: float | None = None
     adj_factor: float | None = None
 
 
@@ -92,6 +95,18 @@ class StocksListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class TreemapGroupResponse(BaseModel):
+    """大盘云图：单行业分组"""
+    industry: str
+    stocks: list[StockWithPriceResponse]
+
+
+class TreemapResponse(BaseModel):
+    """大盘云图：全市场行业分组数据"""
+    groups: list[TreemapGroupResponse]
+    trade_date: str | None = None
 
 
 class KLineListResponse(BaseModel):

@@ -6,13 +6,14 @@
  */
 
 import { useState, useCallback, useEffect } from 'react'
-import { Input, Select, Table, Spin, Empty, Tag } from 'antd'
+import { Input, Select, Table, Spin, Empty, Tag, Segmented } from 'antd'
 import { SearchOutlined, CaretUpOutlined, CaretDownOutlined, MinusOutlined } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { SorterResult } from 'antd/es/table/interface'
 import ReactECharts from 'echarts-for-react'
 import apiClient from '../../services/api'
 import type { StockItem, KLineItem, MarketOverview } from '../../types/stock'
+import MarketTreemap from './MarketTreemap'
 
 // ================================================================
 // 常量
@@ -167,6 +168,9 @@ export default function MarketPage() {
   const [selectedStock, setSelectedStock] = useState<StockItem | null>(null)
   const [klines, setKlines] = useState<KLineItem[]>([])
   const [klineLoading, setKlineLoading] = useState(false)
+
+  // ---- 视图模式 ----
+  const [viewMode, setViewMode] = useState<'treemap' | 'list'>('treemap')
 
   // ---- 大盘概览 ----
   const fetchOverview = useCallback(async (mkt: string) => {
@@ -422,62 +426,84 @@ export default function MarketPage() {
       {/* 大盘概览 */}
       <OverviewCards overview={overview} loading={overviewLoading} />
 
-      {/* 搜索栏 */}
-      <div className="flex items-center gap-3 mb-4" style={{ flexWrap: 'wrap' }}>
-        <Input
-          placeholder="搜索代码 / 名称..."
-          prefix={<SearchOutlined style={{ color: 'var(--text-secondary)' }} />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ maxWidth: 260 }}
-          allowClear
+      {/* 搜索栏 + 视图切换 */}
+      <div className="flex items-center justify-between gap-3 mb-4" style={{ flexWrap: 'wrap' }}>
+        <div className="flex items-center gap-3" style={{ flexWrap: 'wrap' }}>
+          <Input
+            placeholder="搜索代码 / 名称..."
+            prefix={<SearchOutlined style={{ color: 'var(--text-secondary)' }} />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ maxWidth: 260 }}
+            allowClear
+          />
+          <Select
+            options={MARKET_OPTIONS}
+            value={market}
+            onChange={(v) => { setMarket(v); setPage(1) }}
+            style={{ width: 110 }}
+          />
+          <button
+            className="px-5 py-1.5 rounded-md text-sm font-medium border-none cursor-pointer"
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
+            onClick={handleSearch}
+          >
+            查询
+          </button>
+          {viewMode === 'list' && (
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              共 {total.toLocaleString()} 只股票
+            </span>
+          )}
+        </div>
+
+        {/* 视图切换 */}
+        <Segmented
+          options={[
+            { label: '☁️ 云图', value: 'treemap' },
+            { label: '📋 列表', value: 'list' },
+          ]}
+          value={viewMode}
+          onChange={(v) => setViewMode(v as 'treemap' | 'list')}
         />
-        <Select
-          options={MARKET_OPTIONS}
-          value={market}
-          onChange={(v) => { setMarket(v); setPage(1) }}
-          style={{ width: 110 }}
-        />
-        <button
-          className="px-5 py-1.5 rounded-md text-sm font-medium border-none cursor-pointer"
-          style={{ background: 'var(--color-primary)', color: '#fff' }}
-          onClick={handleSearch}
-        >
-          查询
-        </button>
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          共 {total.toLocaleString()} 只股票
-        </span>
       </div>
 
-      {/* 股票表格 */}
-      <Table<StockItem>
-        rowKey="code"
-        columns={columns}
-        dataSource={stocks}
-        loading={loading}
-        onChange={handleTableChange}
-        pagination={{
-          current: page,
-          pageSize: PAGE_SIZE,
-          total,
-          showTotal: (t) => `共 ${t.toLocaleString()} 只`,
-          showSizeChanger: true,
-          pageSizeOptions: ['20', '50', '100'],
-          showQuickJumper: true,
-        }}
-        onRow={(record) => ({
-          onClick: () => handleRowClick(record),
-          style: { cursor: 'pointer' },
-        })}
-        rowClassName={(record) =>
-          selectedStock?.code === record.code ? 'ant-table-row-selected' : ''
-        }
-        scroll={{ x: 800 }}
-        size="middle"
-        locale={{ emptyText: <Empty description="未找到匹配的股票" /> }}
-      />
+      {/* 大盘云图 / 股票表格 */}
+      {viewMode === 'treemap' ? (
+        <MarketTreemap
+          market={market}
+          onStockSelect={handleRowClick}
+          selectedStockCode={selectedStock?.code ?? null}
+        />
+      ) : (
+        <Table<StockItem>
+          rowKey="code"
+          columns={columns}
+          dataSource={stocks}
+          loading={loading}
+          onChange={handleTableChange}
+          pagination={{
+            current: page,
+            pageSize: PAGE_SIZE,
+            total,
+            showTotal: (t) => `共 ${t.toLocaleString()} 只`,
+            showSizeChanger: true,
+            pageSizeOptions: ['20', '50', '100'],
+            showQuickJumper: true,
+          }}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            style: { cursor: 'pointer' },
+          })}
+          rowClassName={(record) =>
+            selectedStock?.code === record.code ? 'ant-table-row-selected' : ''
+          }
+          scroll={{ x: 800 }}
+          size="middle"
+          locale={{ emptyText: <Empty description="未找到匹配的股票" /> }}
+        />
+      )}
 
       {/* K线图 */}
       {selectedStock && (

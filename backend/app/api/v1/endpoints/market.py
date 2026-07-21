@@ -17,6 +17,7 @@ from app.models.stock_schema import (
     MarketOverviewResponse,
     StockResponse,
     StockWithPriceResponse,
+    TreemapResponse,
 )
 from app.services.market_service import MarketService
 
@@ -87,6 +88,21 @@ async def market_overview(
             "trade_date": latest_date,
         }
     )
+
+
+# ================================================================
+# GET /stocks/treemap — 大盘云图数据
+# ================================================================
+
+
+@router.get("/treemap")
+async def treemap_data(
+    market: str | None = Query(default=None, pattern=r"^(SH|SZ|BJ)$", description="交易所筛选"),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取大盘云图数据：所有股票按行业分组，含最新行情，用于 treemap 热力图展示"""
+    data = await MarketService.get_treemap_data(db, market=market)
+    return APIResponse.ok(data=data)
 
 
 # ================================================================

@@ -16,6 +16,7 @@ export interface StockItem {
   volume: number | null            // 成交量
   amount: number | null            // 成交额
   turnover_rate: number | null     // 换手率 %
+  circulating_market_cap: number | null  // 流通市值
   trade_date: string | null        // 最新交易日
 }
 
@@ -44,3 +45,18 @@ export interface KLineItem {
   turnover_rate: number | null
   adj_factor?: number | null
 }
+
+/** 大盘云图：单行业分组 */
+export interface TreemapGroup {
+  industry: string
+  stocks: StockItem[]
+}
+
+/** 大盘云图：API 响应 */
+export interface TreemapResponse {
+  groups: TreemapGroup[]
+  trade_date: string | null
+}
+
+/** 云图维度类型 */
+export type TreemapDimension = 'circulating_market_cap' | 'amount' | 'volume' | 'turnover_rate' | 'change_pct'
