@@ -1,30 +1,24 @@
 /**
- * 市场行情页面
+ * 市场行情页面 — 大盘云图
  *
- * 大盘概览 → 搜索筛选 → 实时行情表格 → K线图（蜡烛图 + MA均线 + 成交量）
- * 参考东方财富/同花顺等专业交易软件的布局和交互
+ * 以 Treemap 热力图为主视图展示全市场A股行情。
+ * 参考 52etf.site 设计：板块Tab → 统计条 → 云图 → 颜色图例 → K线。
+ * 同时保留列表视图作为备用。
  */
 
 import { useState, useCallback, useEffect } from 'react'
-import { Input, Select, Table, Spin, Empty, Tag, Segmented } from 'antd'
-import { SearchOutlined, CaretUpOutlined, CaretDownOutlined, MinusOutlined } from '@ant-design/icons'
+import { Table, Spin, Empty, Tag, Button } from 'antd'
+import { CaretUpOutlined, CaretDownOutlined, MinusOutlined } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { SorterResult } from 'antd/es/table/interface'
 import ReactECharts from 'echarts-for-react'
 import apiClient from '../../services/api'
-import type { StockItem, KLineItem, MarketOverview } from '../../types/stock'
+import type { StockItem, KLineItem } from '../../types/stock'
 import MarketTreemap from './MarketTreemap'
 
 // ================================================================
 // 常量
 // ================================================================
-
-const MARKET_OPTIONS = [
-  { value: '', label: '全部市场' },
-  { value: 'SH', label: '上海' },
-  { value: 'SZ', label: '深圳' },
-  { value: 'BJ', label: '北京' },
-]
 
 const PAGE_SIZE = 20
 
@@ -35,11 +29,6 @@ const DOWN_COLOR = '#16a34a'
 function priceColor(changePct: number | null): string {
   if (changePct == null || changePct === 0) return 'var(--text-primary)'
   return changePct > 0 ? UP_COLOR : DOWN_COLOR
-}
-
-function fmtChange(v: number | null): string {
-  if (v == null) return '—'
-  return v > 0 ? `+${v.toFixed(2)}%` : `${v.toFixed(2)}%`
 }
 
 function fmtNum(n: number | null | undefined): string {
@@ -78,85 +67,20 @@ function getDefaultDateRange() {
 }
 
 // ================================================================
-// 大盘概览卡片
-// ================================================================
-
-function OverviewCards({ overview, loading }: { overview: MarketOverview | null; loading: boolean }) {
-  if (loading || !overview) {
-    return (
-      <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
-            <div className="animate-pulse h-4 w-20 rounded mb-2" style={{ background: 'var(--border-color)' }} />
-            <div className="animate-pulse h-7 w-28 rounded" style={{ background: 'var(--border-color)' }} />
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  const cards = [
-    {
-      label: '上涨家数',
-      value: overview.up_count.toLocaleString(),
-      sub: overview.avg_change_pct > 0 ? `+${overview.avg_change_pct}%` : `${overview.avg_change_pct}%`,
-      color: UP_COLOR,
-      bg: '#fef2f2',
-    },
-    {
-      label: '下跌家数',
-      value: overview.down_count.toLocaleString(),
-      sub: `${((overview.down_count / overview.total_stocks) * 100).toFixed(1)}%`,
-      color: DOWN_COLOR,
-      bg: '#f0fdf4',
-    },
-    {
-      label: '平盘',
-      value: overview.flat_count.toLocaleString(),
-      sub: `共 ${overview.total_stocks.toLocaleString()} 只`,
-      color: 'var(--text-secondary)',
-      bg: 'var(--bg-app)',
-    },
-    {
-      label: '总成交额',
-      value: overview.total_amount >= 1e8 ? (overview.total_amount / 1e8).toFixed(2) + '亿' : fmtNum(overview.total_amount),
-      sub: overview.trade_date ? `交易日 ${overview.trade_date}` : '',
-      color: 'var(--text-primary)',
-      bg: 'var(--bg-app)',
-    },
-  ]
-
-  return (
-    <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className="rounded-lg p-4"
-          style={{ background: card.bg, border: '1px solid var(--border-color)' }}
-        >
-          <div className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>{card.label}</div>
-          <div className="text-xl font-bold" style={{ color: card.color }}>{card.value}</div>
-          <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{card.sub}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ================================================================
 // 主页面
 // ================================================================
 
 export default function MarketPage() {
-  // ---- 搜索 & 筛选 ----
+  // ---- 页面标题 ----
+  useEffect(() => {
+    document.title = '大盘云图 - A股热力图'
+    return () => { document.title = 'MrMarket - 市场先生' }
+  }, [])
+
+  // ---- 列表视图 ----
+  const [showList, setShowList] = useState(false)
   const [search, setSearch] = useState('')
   const [market, setMarket] = useState('')
-
-  // ---- 大盘概览 ----
-  const [overview, setOverview] = useState<MarketOverview | null>(null)
-  const [overviewLoading, setOverviewLoading] = useState(false)
-
-  // ---- 表格 ----
   const [stocks, setStocks] = useState<StockItem[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -169,36 +93,15 @@ export default function MarketPage() {
   const [klines, setKlines] = useState<KLineItem[]>([])
   const [klineLoading, setKlineLoading] = useState(false)
 
-  // ---- 视图模式 ----
-  const [viewMode, setViewMode] = useState<'treemap' | 'list'>('treemap')
-
-  // ---- 大盘概览 ----
-  const fetchOverview = useCallback(async (mkt: string) => {
-    setOverviewLoading(true)
-    try {
-      const params: Record<string, string> = {}
-      if (mkt) params.market = mkt
-      const res = await apiClient.get('/stocks/overview', { params })
-      setOverview(res.data)
-    } catch {
-      // ignore
-    } finally {
-      setOverviewLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchOverview(market)
-  }, [market, fetchOverview])
-
-  // ---- 股票列表 ----
+  // ---- 列表数据 ----
   const fetchStocks = useCallback(async (p: number, sb: string, so: string) => {
     setLoading(true)
     try {
-      const params: Record<string, string | number> = { page: p, page_size: PAGE_SIZE, sort_by: sb, sort_order: so }
+      const params: Record<string, string | number> = {
+        page: p, page_size: PAGE_SIZE, sort_by: sb, sort_order: so,
+      }
       if (market) params.market = market
       if (search.trim()) params.search = search.trim()
-
       const res = await apiClient.get('/stocks', { params })
       setStocks(res.data.items)
       setTotal(res.data.total)
@@ -208,37 +111,8 @@ export default function MarketPage() {
     }
   }, [market, search])
 
-  // 表格变化（分页、排序）
-  const handleTableChange = (
-    pagination: TablePaginationConfig,
-    _filters: any,
-    sorter: SorterResult<StockItem> | SorterResult<StockItem>[]
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter
-    const newSortBy = s.columnKey as string || 'code'
-    const newSortOrder = s.order === 'descend' ? 'desc' : 'asc'
-    setSortBy(newSortBy)
-    setSortOrder(newSortOrder)
-    const newPage = pagination.current || 1
-    setPage(newPage)
-    fetchStocks(newPage, newSortBy, newSortOrder)
-  }
-
-  // 搜索
-  const handleSearch = () => {
-    setPage(1)
-    fetchStocks(1, sortBy, sortOrder)
-  }
-
-  // 初始加载
-  const [initialized, setInitialized] = useState(false)
-  if (!initialized) {
-    setInitialized(true)
-    fetchStocks(1, sortBy, sortOrder)
-  }
-
   // ---- K线 ----
-  const handleRowClick = async (stock: StockItem) => {
+  const handleStockSelect = useCallback(async (stock: StockItem) => {
     if (selectedStock?.code === stock.code) {
       setSelectedStock(null)
       setKlines([])
@@ -252,11 +126,11 @@ export default function MarketPage() {
         params: { start_date: start, end_date: end },
       })
       const data: KLineItem[] = res.data.items || []
-      setKlines(data.reverse()) // 升序
+      setKlines(data.reverse())
     } finally {
       setKlineLoading(false)
     }
-  }
+  }, [selectedStock])
 
   // ---- K线图配置 ----
   const getChartOption = () => {
@@ -282,7 +156,6 @@ export default function MarketPage() {
           const k = params.find((p: any) => p.seriesName === 'K线')
           if (!k) return ''
           const d = k.data
-          // d is [open, close, low, high]
           const color = d[1] >= d[0] ? UP_COLOR : DOWN_COLOR
           return `
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">${k.axisValue}</div>
@@ -311,15 +184,10 @@ export default function MarketPage() {
         { type: 'value', gridIndex: 1, axisLabel: { fontSize: 10, color: '#94a3b8', formatter: (v: number) => v >= 1e8 ? (v / 1e8).toFixed(1) + '亿' : (v / 1e4).toFixed(0) + '万' }, splitLine: { show: false } },
       ],
       series: [
-        // MA60
         { name: 'MA60', type: 'line', data: ma60, xAxisIndex: 0, yAxisIndex: 0, symbol: 'none', smooth: true, lineStyle: { width: 1, color: '#a855f7', type: 'dashed' } },
-        // MA20
         { name: 'MA20', type: 'line', data: ma20, xAxisIndex: 0, yAxisIndex: 0, symbol: 'none', smooth: true, lineStyle: { width: 1, color: '#f59e0b' } },
-        // MA10
         { name: 'MA10', type: 'line', data: ma10, xAxisIndex: 0, yAxisIndex: 0, symbol: 'none', smooth: true, lineStyle: { width: 1, color: '#3b82f6' } },
-        // MA5
         { name: 'MA5', type: 'line', data: ma5, xAxisIndex: 0, yAxisIndex: 0, symbol: 'none', smooth: true, lineStyle: { width: 1.5, color: '#f8fafc' } },
-        // K线
         {
           name: 'K线', type: 'candlestick', data: ohlc, xAxisIndex: 0, yAxisIndex: 0,
           itemStyle: { color: UP_COLOR, color0: DOWN_COLOR, borderColor: UP_COLOR, borderColor0: DOWN_COLOR },
@@ -331,7 +199,6 @@ export default function MarketPage() {
             ],
           },
         },
-        // 成交量
         {
           name: '成交量', type: 'bar', data: volumes, xAxisIndex: 1, yAxisIndex: 1,
           itemStyle: {
@@ -351,7 +218,7 @@ export default function MarketPage() {
   // ---- 表格列 ----
   const columns: ColumnsType<StockItem> = [
     {
-      title: '代码', dataIndex: 'code', key: 'code', width: 90, sorter: true, sortOrder: sortBy === 'code' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : null,
+      title: '代码', dataIndex: 'code', key: 'code', width: 90, sorter: true,
       render: (code: string, rec: StockItem) => (
         <span style={{ fontFamily: 'monospace', fontSize: 13 }}>
           {code}
@@ -359,9 +226,7 @@ export default function MarketPage() {
         </span>
       ),
     },
-    {
-      title: '名称', dataIndex: 'name', key: 'name', width: 100, sorter: true,
-    },
+    { title: '名称', dataIndex: 'name', key: 'name', width: 100, sorter: true },
     {
       title: '最新价', dataIndex: 'latest_price', key: 'latest_price', width: 90, align: 'right',
       render: (_: any, rec: StockItem) => (
@@ -369,12 +234,9 @@ export default function MarketPage() {
           {fmtPrice(rec.latest_price)}
         </span>
       ),
-      sorter: true,
-      sortOrder: sortBy === 'change_pct' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : null,
     },
     {
       title: '涨跌幅', dataIndex: 'change_pct', key: 'change_pct', width: 90, align: 'right', sorter: true,
-      sortOrder: sortBy === 'change_pct' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : null,
       render: (v: number | null) => {
         if (v == null) return <span style={{ color: 'var(--text-secondary)' }}>—</span>
         const icon = v > 0 ? <CaretUpOutlined /> : v < 0 ? <CaretDownOutlined /> : <MinusOutlined />
@@ -387,96 +249,82 @@ export default function MarketPage() {
     },
     {
       title: '成交量', dataIndex: 'volume', key: 'volume', width: 100, align: 'right', sorter: true,
-      sortOrder: sortBy === 'volume' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : null,
-      render: (v: number | null) => (
-        <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {fmtNum(v)}
-        </span>
-      ),
+      render: (v: number | null) => <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>{fmtNum(v)}</span>,
     },
     {
       title: '成交额', dataIndex: 'amount', key: 'amount', width: 100, align: 'right', sorter: true,
-      sortOrder: sortBy === 'amount' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : null,
-      render: (v: number | null) => (
-        <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {fmtNum(v)}
-        </span>
-      ),
+      render: (v: number | null) => <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>{fmtNum(v)}</span>,
     },
     {
       title: '换手率', dataIndex: 'turnover_rate', key: 'turnover_rate', width: 80, align: 'right',
-      render: (v: number | null) => (
-        <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {v != null ? `${v.toFixed(2)}%` : '—'}
-        </span>
-      ),
+      render: (v: number | null) => <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>{v != null ? `${v.toFixed(2)}%` : '—'}</span>,
     },
     {
       title: '行业', dataIndex: 'industry', ellipsis: true, width: 120,
-      render: (v: string | null) => (
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{v || '—'}</span>
-      ),
+      render: (v: string | null) => <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{v || '—'}</span>,
     },
   ]
 
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">📈 市场行情</h1>
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    _filters: any,
+    sorter: SorterResult<StockItem> | SorterResult<StockItem>[]
+  ) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter
+    const newSortBy = s.columnKey as string || 'code'
+    const newSortOrder = s.order === 'descend' ? 'desc' : 'asc'
+    setSortBy(newSortBy)
+    setSortOrder(newSortOrder)
+    const newPage = pagination.current || 1
+    setPage(newPage)
+    fetchStocks(newPage, newSortBy, newSortOrder)
+  }
 
-      {/* 大盘概览 */}
-      <OverviewCards overview={overview} loading={overviewLoading} />
+  // ================================================================
+  // 渲染
+  // ================================================================
 
-      {/* 搜索栏 + 视图切换 */}
-      <div className="flex items-center justify-between gap-3 mb-4" style={{ flexWrap: 'wrap' }}>
-        <div className="flex items-center gap-3" style={{ flexWrap: 'wrap' }}>
-          <Input
+  // 列表视图
+  if (showList) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold" style={{ margin: 0 }}>📈 市场行情</h1>
+          <Button onClick={() => setShowList(false)}>☁️ 切换到大盘云图</Button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4" style={{ flexWrap: 'wrap' }}>
+          <input
             placeholder="搜索代码 / 名称..."
-            prefix={<SearchOutlined style={{ color: 'var(--text-secondary)' }} />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onPressEnter={handleSearch}
-            style={{ maxWidth: 260 }}
-            allowClear
+            onKeyDown={(e) => e.key === 'Enter' && fetchStocks(1, sortBy, sortOrder)}
+            className="px-3 py-1.5 rounded border text-sm"
+            style={{ maxWidth: 220, border: '1px solid var(--border-color)', background: 'var(--bg-surface)' }}
           />
-          <Select
-            options={MARKET_OPTIONS}
+          <select
             value={market}
-            onChange={(v) => { setMarket(v); setPage(1) }}
-            style={{ width: 110 }}
-          />
+            onChange={(v) => { setMarket(v.target.value); setPage(1) }}
+            className="px-3 py-1.5 rounded border text-sm"
+            style={{ border: '1px solid var(--border-color)', background: 'var(--bg-surface)' }}
+          >
+            <option value="">全部市场</option>
+            <option value="SH">上海</option>
+            <option value="SZ">深圳</option>
+            <option value="BJ">北京</option>
+          </select>
           <button
             className="px-5 py-1.5 rounded-md text-sm font-medium border-none cursor-pointer"
-            style={{ background: 'var(--color-primary)', color: '#fff' }}
-            onClick={handleSearch}
+            style={{ background: '#1677ff', color: '#fff' }}
+            onClick={() => fetchStocks(1, sortBy, sortOrder)}
           >
             查询
           </button>
-          {viewMode === 'list' && (
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              共 {total.toLocaleString()} 只股票
-            </span>
-          )}
+          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            共 {total.toLocaleString()} 只股票
+          </span>
         </div>
 
-        {/* 视图切换 */}
-        <Segmented
-          options={[
-            { label: '☁️ 云图', value: 'treemap' },
-            { label: '📋 列表', value: 'list' },
-          ]}
-          value={viewMode}
-          onChange={(v) => setViewMode(v as 'treemap' | 'list')}
-        />
-      </div>
-
-      {/* 大盘云图 / 股票表格 */}
-      {viewMode === 'treemap' ? (
-        <MarketTreemap
-          market={market}
-          onStockSelect={handleRowClick}
-          selectedStockCode={selectedStock?.code ?? null}
-        />
-      ) : (
         <Table<StockItem>
           rowKey="code"
           columns={columns}
@@ -484,47 +332,87 @@ export default function MarketPage() {
           loading={loading}
           onChange={handleTableChange}
           pagination={{
-            current: page,
-            pageSize: PAGE_SIZE,
-            total,
-            showTotal: (t) => `共 ${t.toLocaleString()} 只`,
-            showSizeChanger: true,
-            pageSizeOptions: ['20', '50', '100'],
-            showQuickJumper: true,
+            current: page, pageSize: PAGE_SIZE, total,
+            showTotal: (t: number) => `共 ${t.toLocaleString()} 只`,
+            showSizeChanger: true, pageSizeOptions: ['20', '50', '100'], showQuickJumper: true,
           }}
           onRow={(record) => ({
-            onClick: () => handleRowClick(record),
+            onClick: () => handleStockSelect(record),
             style: { cursor: 'pointer' },
           })}
-          rowClassName={(record) =>
-            selectedStock?.code === record.code ? 'ant-table-row-selected' : ''
-          }
+          rowClassName={(record) => selectedStock?.code === record.code ? 'ant-table-row-selected' : ''}
           scroll={{ x: 800 }}
           size="middle"
           locale={{ emptyText: <Empty description="未找到匹配的股票" /> }}
         />
-      )}
 
-      {/* K线图 */}
+        {/* K线图 */}
+        {selectedStock && (
+          <div className="rounded-lg mt-4 p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold" style={{ margin: 0 }}>{selectedStock.name}</h2>
+                <span style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{selectedStock.code}</span>
+                {selectedStock.industry && <Tag>{selectedStock.industry}</Tag>}
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <span style={{ color: '#94a3b8' }}>━ MA5</span>
+                <span style={{ color: '#3b82f6' }}>━ MA10</span>
+                <span style={{ color: '#f59e0b' }}>━ MA20</span>
+                <span style={{ color: '#a855f7' }}>┅ MA60</span>
+              </div>
+            </div>
+
+            {klineLoading ? (
+              <div className="flex items-center justify-center" style={{ height: 480 }}><Spin size="large" /></div>
+            ) : klines.length === 0 ? (
+              <Empty description="暂无K线数据" style={{ padding: 80 }} />
+            ) : (
+              <ReactECharts option={getChartOption()} style={{ height: 480 }} />
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ================================================================
+  // 大盘云图视图（主视图）
+  // ================================================================
+
+  return (
+    <div style={{ maxWidth: '100%' }}>
+      {/* 标题栏 */}
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold" style={{ margin: 0 }}>
+          大盘云图
+          <span className="text-sm font-normal ml-2" style={{ color: '#999' }}>A股热力图</span>
+        </h1>
+        <Button size="small" onClick={() => setShowList(true)}>📋 列表视图</Button>
+      </div>
+
+      {/* 大盘云图（含板块Tab、统计条、Treemap、颜色图例） */}
+      <MarketTreemap
+        onStockSelect={handleStockSelect}
+        selectedStockCode={selectedStock?.code ?? null}
+      />
+
+      {/* K线图（双击云图色块时展示） */}
       {selectedStock && (
         <div
           className="rounded-lg mt-4 p-5"
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}
+          style={{ background: '#fff', border: '1px solid #e5e7eb' }}
         >
-          {/* 股票信息头 */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold" style={{ margin: 0, color: 'var(--text-primary)' }}>
+              <h2 className="text-lg font-bold" style={{ margin: 0 }}>
                 {selectedStock.name}
               </h2>
-              <span style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{selectedStock.code}</span>
-              {selectedStock.industry && (
-                <Tag style={{ margin: 0 }}>{selectedStock.industry}</Tag>
-              )}
+              <span style={{ fontFamily: 'monospace', color: '#999' }}>{selectedStock.code}</span>
+              {selectedStock.industry && <Tag style={{ margin: 0 }}>{selectedStock.industry}</Tag>}
             </div>
             <div className="flex items-center gap-4 text-sm">
-              {/* 图例 */}
-              <span style={{ color: '#f8fafc' }}>━ MA5</span>
+              <span style={{ color: '#94a3b8' }}>━ MA5</span>
               <span style={{ color: '#3b82f6' }}>━ MA10</span>
               <span style={{ color: '#f59e0b' }}>━ MA20</span>
               <span style={{ color: '#a855f7' }}>┅ MA60</span>
@@ -532,9 +420,7 @@ export default function MarketPage() {
           </div>
 
           {klineLoading ? (
-            <div className="flex items-center justify-center" style={{ height: 480 }}>
-              <Spin size="large" />
-            </div>
+            <div className="flex items-center justify-center" style={{ height: 480 }}><Spin size="large" /></div>
           ) : klines.length === 0 ? (
             <Empty description="暂无K线数据" style={{ padding: 80 }} />
           ) : (
