@@ -382,37 +382,34 @@ export default function MarketPage() {
 
   return (
     <div style={{ maxWidth: '100%' }}>
-      {/* 标题栏 */}
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold" style={{ margin: 0 }}>
-          大盘云图
-          <span className="text-sm font-normal ml-2" style={{ color: '#999' }}>A股热力图</span>
-        </h1>
-        <Button size="small" onClick={() => setShowList(true)}>📋 列表视图</Button>
-      </div>
-
-      {/* 大盘云图（含板块Tab、统计条、Treemap、颜色图例） */}
+      {/* 大盘云图（含标题栏、板块Tab、统计条、Treemap、颜色图例） */}
       <MarketTreemap
         onStockSelect={handleStockSelect}
         selectedStockCode={selectedStock?.code ?? null}
       />
 
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+        <Button size="small" onClick={() => setShowList(true)} style={{ background: '#3f414b', color: '#fefefe', border: 'none' }}>
+          📋 列表视图
+        </Button>
+      </div>
+
       {/* K线图（双击云图色块时展示） */}
       {selectedStock && (
         <div
-          className="rounded-lg mt-4 p-5"
-          style={{ background: '#fff', border: '1px solid #e5e7eb' }}
+          className="rounded-lg mt-3 p-5"
+          style={{ background: '#2a2d35', border: '1px solid #4a4f5d' }}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold" style={{ margin: 0 }}>
+              <h2 className="text-lg font-bold" style={{ margin: 0, color: '#fefefe' }}>
                 {selectedStock.name}
               </h2>
-              <span style={{ fontFamily: 'monospace', color: '#999' }}>{selectedStock.code}</span>
+              <span style={{ fontFamily: 'monospace', color: '#9ca3af' }}>{selectedStock.code}</span>
               {selectedStock.industry && <Tag style={{ margin: 0 }}>{selectedStock.industry}</Tag>}
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span style={{ color: '#94a3b8' }}>━ MA5</span>
+              <span style={{ color: '#f8fafc' }}>━ MA5</span>
               <span style={{ color: '#3b82f6' }}>━ MA10</span>
               <span style={{ color: '#f59e0b' }}>━ MA20</span>
               <span style={{ color: '#a855f7' }}>┅ MA60</span>
@@ -422,7 +419,7 @@ export default function MarketPage() {
           {klineLoading ? (
             <div className="flex items-center justify-center" style={{ height: 480 }}><Spin size="large" /></div>
           ) : klines.length === 0 ? (
-            <Empty description="暂无K线数据" style={{ padding: 80 }} />
+            <Empty description={<span style={{ color: '#9ca3af' }}>暂无K线数据</span>} style={{ padding: 80 }} />
           ) : (
             <ReactECharts option={getChartOption()} style={{ height: 480 }} />
           )}
