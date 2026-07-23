@@ -169,7 +169,7 @@ export default function MarketTreemap({ onStockSelect }: MarketTreemapProps) {
     },
     series: [{
       type: 'treemap', width: '100%', height: '100%', top: 0, bottom: 30,
-      roam: 'scale', nodeClick: 'link' as const,
+      roam: false, nodeClick: 'link' as const,
       breadcrumb: { show: true, height: 28, bottom: 0, itemStyle: { color: '#f0f0f0', borderColor: '#d1d5db', textStyle: { color: '#374151' } }, emphasis: { itemStyle: { color: '#e5e7eb', textStyle: { color: '#1f2937' } } } },
       upperLabel: { show: true, height: 20, fontSize: 11, color: '#374151', fontWeight: 'bold' as const, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 2, padding: [2, 6] as [number, number] },
       levels: [
