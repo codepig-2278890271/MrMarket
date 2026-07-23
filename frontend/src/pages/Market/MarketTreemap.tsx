@@ -162,7 +162,9 @@ export default function MarketTreemap({ onStockSelect }: MarketTreemapProps) {
         if (!params.data?.stockCode) return params.name
         const d = params.data; const p = d.changePct ?? 0
         const c = p > 0 ? UP_COLOR : p < 0 ? DOWN_COLOR : '#6b7280'
-        return `<div style="font-size:14px;font-weight:600;margin-bottom:6px">${d.name}${d.isST ? ' <span style="color:#f63538;font-size:10px">ST</span>' : ''}<span style="font-family:monospace;color:#9ca3af;font-weight:400;margin-left:6px">${d.stockCode}</span></div><div style="line-height:1.8">最新价 <b style="float:right;margin-left:20px">${d.latestPrice?.toFixed(2) ?? '—'}</b><br/>涨跌幅 <b style="float:right;margin-left:20px;color:${c}">${p > 0 ? '+' : ''}${p.toFixed(2)}%</b><br/>流通市值 <b style="float:right;margin-left:20px">${fmtNum(d.circulatingMcap)}</b><br/>成交额 <b style="float:right;margin-left:20px">${fmtNum(d.amount)}</b></div>`
+        const vol = d.volume != null ? (d.volume / 10000).toFixed(0) + '万股' : '—'
+        const tor = d.turnoverRate != null ? d.turnoverRate.toFixed(2) + '%' : '—'
+        return `<div style="font-size:14px;font-weight:600;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #e5e7eb">${d.name}${d.isST ? ' <span style="color:#f63538;font-size:10px">ST</span>' : ''}<span style="font-family:monospace;color:#9ca3af;font-weight:400;margin-left:6px">${d.stockCode}</span></div><div style="line-height:2.0">最新价 <b style="float:right;margin-left:24px">${d.latestPrice?.toFixed(2) ?? '—'}</b><br/>涨跌幅 <b style="float:right;margin-left:24px;color:${c}">${p > 0 ? '+' : ''}${p.toFixed(2)}%</b><br/>流通市值 <b style="float:right;margin-left:24px">${fmtNum(d.circulatingMcap)}</b><br/>成交额 <b style="float:right;margin-left:24px">${fmtNum(d.amount)}</b><br/>成交量 <b style="float:right;margin-left:24px">${vol}</b><br/>换手率 <b style="float:right;margin-left:24px">${tor}</b></div>`
       },
     },
     series: [{

@@ -147,6 +147,87 @@ async def sync_industries_from_sw():
     logger.info(f"  行业分布: {len(df_latest['行业名称'].unique())} 个一级行业")
 
     # 批量更新 stocks 表
+    await _update_stock_industries(stock_industry)
+
+
+async def sync_industries_from_ths_em():
+    """
+    从同花顺 / 东方财富获取行业分类并填充 stocks.industry。
+
+    数据来源：
+    1. 同花顺行业板块名称 → stock_board_industry_name_ths()
+    2. 东方财富行业成分股 → stock_board_industry_cons_em()
+
+    同花顺行业分类与东方财富行业分类高度一致，
+    均为市场主流炒股软件采用的分类标准。
+    """
+    import time
+    import akshare as ak
+
+    logger.info("📥 从同花顺 / 东方财富获取行业分类数据...")
+
+    # Step 1: 获取同花顺所有一级行业名称
+    logger.info("  Step 1/2: 获取行业板块列表...")
+    try:
+        df_industries = ak.stock_board_industry_name_ths()
+        industry_names = df_industries["name"].tolist()
+        logger.info(f"  ✅ 获取到 {len(industry_names)} 个行业板块: {industry_names[:10]}...")
+    except Exception as e:
+        logger.error(f"  ❌ 获取行业列表失败: {e}")
+        return
+
+    # Step 2: 遍历每个行业获取成分股
+    logger.info(f"  Step 2/2: 逐行业拉取成分股...")
+    stock_industry: dict[str, str] = {}
+    failed_industries: list[str] = []
+
+    for idx, industry in enumerate(industry_names):
+        try:
+            df_cons = ak.stock_board_industry_cons_em(symbol=industry)
+
+            if df_cons is None or df_cons.empty:
+                logger.warning(f"    [{idx+1}/{len(industry_names)}] {industry}: 无成分股数据")
+                failed_industries.append(industry)
+                continue
+
+            # 东方财富返回的列名: "代码", "名称", ...
+            code_col = "代码" if "代码" in df_cons.columns else df_cons.columns[0]
+            codes = df_cons[code_col].astype(str).str.zfill(6).tolist()
+
+            for code in codes:
+                # 如果同一只股票出现在多个行业，保留先出现的（第一个行业）
+                if code not in stock_industry:
+                    stock_industry[code] = industry
+
+            if (idx + 1) % 20 == 0:
+                logger.info(f"    进度: {idx+1}/{len(industry_names)}, "
+                           f"已收集 {len(stock_industry)} 只股票")
+
+            # 避免请求过快
+            time.sleep(0.3)
+
+        except Exception as e:
+            logger.warning(f"    [{idx+1}/{len(industry_names)}] {industry}: {e}")
+            failed_industries.append(industry)
+            time.sleep(1)
+            continue
+
+    logger.info(f"  ✅ 收集完成: {len(stock_industry)} 只股票 → "
+                f"{len(set(stock_industry.values()))} 个行业")
+
+    if failed_industries:
+        logger.warning(f"  ⚠️  {len(failed_industries)} 个行业获取失败: {failed_industries[:10]}...")
+
+    if not stock_industry:
+        logger.error("  ❌ 未获取到任何行业数据")
+        return
+
+    # Step 3: 批量更新数据库
+    await _update_stock_industries(stock_industry)
+
+
+async def _update_stock_industries(stock_industry: dict[str, str]):
+    """批量更新 stocks 表的 industry 字段"""
     async with engine.begin() as conn:
         updated = 0
         for code, industry in stock_industry.items():
@@ -166,8 +247,8 @@ async def sync_industries_from_sw():
             "SELECT industry, count(*) as cnt FROM stocks "
             "GROUP BY industry ORDER BY cnt DESC"
         ))
-        logger.info("  📊 行业分布 Top 10:")
-        for row in stats.fetchmany(10):
+        logger.info("  📊 行业分布 Top 15:")
+        for row in stats.fetchmany(15):
             logger.info(f"      {row[0]}: {row[1]} 只")
 
 
@@ -262,6 +343,11 @@ async def main():
         "--kline-days", type=int, default=5,
         help="K 线重同步天数（默认 5 天）"
     )
+    parser.add_argument(
+        "--industry-source", type=str, default="ths",
+        choices=["sw", "ths"],
+        help="行业分类数据源: sw=申万2021, ths=同花顺/东方财富（默认）"
+    )
     args = parser.parse_args()
 
     logger.info("=" * 60)
@@ -273,8 +359,11 @@ async def main():
     await migrate_add_columns()
 
     # Step 2: 行业分类
-    logger.info("\n🏭 Step 2/3: 同步行业分类数据")
-    await sync_industries_from_sw()
+    logger.info(f"\n🏭 Step 2/3: 同步行业分类数据（数据源: {args.industry_source}）")
+    if args.industry_source == "ths":
+        await sync_industries_from_ths_em()
+    else:
+        await sync_industries_from_sw()
 
     # Step 3: 流通市值（可选）
     if args.force_kline_sync:
