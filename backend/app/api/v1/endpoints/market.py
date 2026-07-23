@@ -106,6 +106,31 @@ async def treemap_data(
 
 
 # ================================================================
+# POST /stocks/treemap/sync-market-cap — 同步流通市值
+# ================================================================
+
+
+@router.post("/treemap/sync-market-cap")
+async def sync_market_cap(db: AsyncSession = Depends(get_db)):
+    """
+    从东方财富获取全A股实时流通市值快照，更新到最新K线记录。
+    用于修复 treemap 中市值缺失导致面积比例不准的问题。
+    """
+    from app.integrations.akshare import fetch_market_cap_snapshot
+    from app.services.sync_service import SyncService
+
+    market_caps = fetch_market_cap_snapshot()
+    if not market_caps:
+        return APIResponse.error(code=502, message="获取市值数据失败，请稍后重试")
+
+    count = await SyncService.upsert_market_caps(db, market_caps)
+    return APIResponse.ok(
+        data={"updated": count, "total_with_cap": len(market_caps)},
+        message=f"成功更新 {count} 只股票的流通市值",
+    )
+
+
+# ================================================================
 # GET /stocks/{code} — 查询单只股票详情
 # ================================================================
 

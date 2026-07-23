@@ -152,6 +152,41 @@ class AkshareFetcher(BaseFetcher):
                     continue
         return None
 
+    def fetch_market_cap_snapshot(self) -> dict[str, float]:
+        """
+        从东方财富获取全 A 股实时流通市值快照。
+        返回 {股票代码: 流通市值(元)} 字典。
+        流通市值单位：东方财富返回的是元。
+        """
+        import time
+
+        logger.info("📊 正在从东方财富获取全 A 股市值快照...")
+        for attempt in range(3):
+            try:
+                df = ak.stock_zh_a_spot_em()
+
+                if df is None or df.empty:
+                    logger.warning("  stock_zh_a_spot_em 返回空数据")
+                    return {}
+
+                result: dict[str, float] = {}
+                for _, row in df.iterrows():
+                    code = str(row["代码"])
+                    cap_raw = row.get("流通市值")
+                    if cap_raw is not None and float(cap_raw) > 0:
+                        result[code] = float(cap_raw)
+
+                logger.info(f"✅ 获取到 {len(result)} 只股票的流通市值数据")
+                return result
+
+            except Exception as e:
+                logger.warning(f"  第 {attempt + 1} 次尝试获取市值数据失败: {e}")
+                if attempt < 2:
+                    time.sleep(3)
+
+        logger.error("❌ 获取流通市值数据全部失败")
+        return {}
+
 
 # 便捷函数 — 兼容旧调用方式
 _fetcher = AkshareFetcher()
@@ -170,3 +205,8 @@ def fetch_kline_daily(
 ) -> list[dict]:
     """拉取单只股票的日K线数据（兼容旧 API）"""
     return _fetcher.fetch_kline_daily(stock_code, market=market, start_date=start_date, end_date=end_date)
+
+
+def fetch_market_cap_snapshot() -> dict[str, float]:
+    """获取全 A 股流通市值快照（兼容旧 API）"""
+    return _fetcher.fetch_market_cap_snapshot()
