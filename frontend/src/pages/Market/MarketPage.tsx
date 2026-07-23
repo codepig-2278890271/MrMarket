@@ -1,7 +1,6 @@
 /**
  * 市场行情页面 — 大盘云图
  *
- * 参考 52etf.site: 左侧面板 + 深色 treemap + 底部图例
  * 全视口布局，覆盖 AppLayout 默认约束。
  */
 
@@ -65,19 +64,19 @@ export default function MarketPage() {
     const ohlc = klines.map((k) => [k.open, k.close, k.low, k.high])
     const volumes = klines.map((k) => k.volume)
     return {
-      backgroundColor: '#1e1e2e',
-      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, backgroundColor: 'rgba(30,30,40,0.95)', borderColor: '#4a4f5d', textStyle: { color: '#fefefe', fontSize: 12 } },
+      backgroundColor: '#ffffff',
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, backgroundColor: 'rgba(255,255,255,0.95)', borderColor: '#d1d5db', textStyle: { color: '#1f2937', fontSize: 12 } },
       grid: [{ left: '8%', right: '2%', top: 20, height: '55%' }, { left: '8%', right: '2%', top: '80%', height: '14%' }],
       xAxis: [
-        { type: 'category', data: dates, gridIndex: 0, axisLabel: { show: false, color: '#9ca3af' }, axisLine: { lineStyle: { color: '#4a4f5d' } } },
-        { type: 'category', data: dates, gridIndex: 1, axisLabel: { show: false, color: '#9ca3af' }, axisLine: { lineStyle: { color: '#4a4f5d' } } },
+        { type: 'category', data: dates, gridIndex: 0, axisLabel: { show: false, color: '#6b7280' }, axisLine: { lineStyle: { color: '#d1d5db' } } },
+        { type: 'category', data: dates, gridIndex: 1, axisLabel: { show: false, color: '#6b7280' }, axisLine: { lineStyle: { color: '#d1d5db' } } },
       ],
       yAxis: [
-        { type: 'value', gridIndex: 0, scale: true, splitLine: { lineStyle: { color: '#374151' } }, axisLabel: { fontSize: 10, color: '#9ca3af' } },
-        { type: 'value', gridIndex: 1, axisLabel: { fontSize: 10, color: '#9ca3af' }, splitLine: { show: false } },
+        { type: 'value', gridIndex: 0, scale: true, splitLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { fontSize: 10, color: '#6b7280' } },
+        { type: 'value', gridIndex: 1, axisLabel: { fontSize: 10, color: '#6b7280' }, splitLine: { show: false } },
       ],
       series: [
-        { name: 'MA5', type: 'line', data: calcMA(klines, 5), symbol: 'none', smooth: true, lineStyle: { width: 1.5, color: '#f8fafc' } },
+        { name: 'MA5', type: 'line', data: calcMA(klines, 5), symbol: 'none', smooth: true, lineStyle: { width: 1.5, color: '#374151' } },
         { name: 'MA10', type: 'line', data: calcMA(klines, 10), symbol: 'none', smooth: true, lineStyle: { width: 1, color: '#3b82f6' } },
         { name: 'MA20', type: 'line', data: calcMA(klines, 20), symbol: 'none', smooth: true, lineStyle: { width: 1, color: '#f59e0b' } },
         { name: 'MA60', type: 'line', data: calcMA(klines, 60), symbol: 'none', smooth: true, lineStyle: { width: 1, color: '#a855f7', type: 'dashed' } },
@@ -94,15 +93,21 @@ export default function MarketPage() {
       <style>{`
         /* Remove AppLayout content constraints for market page */
         #market-page-root {
-          margin: -32px calc(-1 * var(--content-padding, 6px)) -64px !important;
-          max-width: none !important;
-          width: 100vw !important;
-          height: calc(100vh - 56px) !important;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw;
+          margin-right: -50vw;
+          margin-top: -32px;
+          margin-bottom: -64px;
+          width: 100vw;
+          max-width: none;
+          height: calc(100vh - 56px);
           overflow: hidden;
         }
       `}</style>
 
-      <div id="market-page-root" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div id="market-page-root" style={{ display: 'flex', flexDirection: 'column' }}>
         <MarketTreemap onStockSelect={handleStockSelect} />
 
         {/* K-line overlay when a stock is double-clicked */}
@@ -111,15 +116,15 @@ export default function MarketPage() {
             position: 'fixed', inset: 0, zIndex: 1000,
             background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }} onClick={() => { setSelectedStock(null); setKlines([]) }}>
-            <div style={{ width: '90vw', maxWidth: 1200, maxHeight: '85vh', background: '#1e1e2e', borderRadius: 12, border: '1px solid #4a4f5d', padding: 20, overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '90vw', maxWidth: 1200, maxHeight: '85vh', background: '#ffffff', borderRadius: 12, border: '1px solid #d1d5db', padding: 20, overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <h2 style={{ margin: 0, color: '#fefefe', fontSize: 18 }}>{selectedStock.name}</h2>
-                  <span style={{ fontFamily: 'monospace', color: '#9ca3af' }}>{selectedStock.code}</span>
+                  <h2 style={{ margin: 0, color: '#1f2937', fontSize: 18 }}>{selectedStock.name}</h2>
+                  <span style={{ fontFamily: 'monospace', color: '#6b7280' }}>{selectedStock.code}</span>
                   {selectedStock.industry && <Tag>{selectedStock.industry}</Tag>}
                 </div>
                 <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
-                  <span style={{ color: '#f8fafc' }}>━ MA5</span>
+                  <span style={{ color: '#374151' }}>━ MA5</span>
                   <span style={{ color: '#3b82f6' }}>━ MA10</span>
                   <span style={{ color: '#f59e0b' }}>━ MA20</span>
                   <span style={{ color: '#a855f7' }}>┅ MA60</span>
@@ -128,7 +133,7 @@ export default function MarketPage() {
               {klineLoading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>
               ) : klines.length === 0 ? (
-                <Empty description={<span style={{ color: '#9ca3af' }}>暂无K线数据</span>} />
+                <Empty description={<span style={{ color: '#6b7280' }}>暂无K线数据</span>} />
               ) : (
                 <ReactECharts option={getChartOption()} style={{ height: 500 }} />
               )}
